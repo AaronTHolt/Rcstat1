@@ -1,0 +1,88 @@
+Start|End|NodeList|Partition
+2015-04-27T10:53:01|2015-05-02T10:53:06|himem03|crc-himem
+2015-04-27T10:53:01|2015-05-02T10:53:09|himem03|
+2015-05-07T15:49:33|2015-05-07T15:50:39|himem03|crc-himem
+2015-05-07T15:49:33|2015-05-07T15:50:39|himem03|
+2015-05-07T16:31:44|2015-05-07T16:32:03|himem03|crc-himem
+2015-05-07T16:31:44|2015-05-07T16:32:03|himem03|
+2015-05-07T16:36:27|2015-05-07T22:27:36|himem03|crc-himem
+2015-05-07T16:36:27|2015-05-07T22:27:36|himem03|
+2015-05-08T12:53:41|2015-05-08T18:17:26|himem03|crc-himem
+2015-05-08T12:53:41|2015-05-08T18:17:26|himem03|
+2015-05-12T16:28:09|2015-05-12T16:28:09|None assigned|janus
+2015-05-12T16:28:12|2015-05-12T16:28:12|None assigned|janus
+2015-05-12T16:28:14|2015-05-12T16:28:14|None assigned|janus
+2015-05-12T16:28:16|2015-05-12T16:28:16|None assigned|janus
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem03|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:48|himem03|
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem03|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:49|himem03|
+2015-05-12T16:34:32|2015-05-12T16:34:34|himem01|crc-himem
+2015-05-12T16:34:32|2015-05-12T16:34:34|himem01|
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem01|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:47|himem01|
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem01|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:47|himem01|
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem01|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:56|himem01|
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem02|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:50|himem02|
+2015-05-12T16:34:32|2015-05-13T09:52:45|himem02|crc-himem
+2015-05-12T16:34:32|2015-05-13T09:52:51|himem02|
+2015-05-12T16:34:56|2015-05-13T09:52:45|himem01|crc-himem
+2015-05-12T16:34:56|2015-05-13T09:52:48|himem01|
+2015-05-12T16:34:56|2015-05-13T09:52:45|himem02|crc-himem
+2015-05-12T16:34:56|2015-05-13T09:52:54|himem02|
+2015-05-12T16:34:56|2015-05-13T09:52:45|himem02|crc-himem
+2015-05-12T16:34:56|2015-05-13T09:52:56|himem02|
+2015-05-12T16:34:56|2015-05-13T09:52:45|himem02|crc-himem
+2015-05-12T16:34:56|2015-05-13T09:52:59|himem02|
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T09:52:45|2015-05-13T09:52:45|None assigned|crc-himem
+2015-05-13T21:21:27|Unknown|himem03|crc-himem
+2015-05-13T21:21:27|Unknown|himem03|crc-himem
+2015-05-13T21:21:27|Unknown|himem01|crc-himem
+2015-05-13T21:21:27|Unknown|himem01|crc-himem
+2015-05-13T21:21:27|Unknown|himem01|crc-himem
+2015-05-13T21:21:27|Unknown|himem01|crc-himem
+2015-05-13T21:21:27|Unknown|himem02|crc-himem
+2015-05-13T21:21:27|Unknown|himem02|crc-himem
+2015-05-13T21:21:27|Unknown|himem02|crc-himem
+2015-05-13T21:21:27|Unknown|himem02|crc-himem
+2015-05-13T21:21:27|Unknown|himem02|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem
+Unknown|Unknown|None assigned|crc-himem

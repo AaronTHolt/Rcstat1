@@ -1,61 +1,32 @@
-import time
 import re
 import os
 import subprocess
 import rrdtool
 import hostlist
-import dateutil.parser
-import time
-from calendar import timegm
-from datetime import datetime
 
- # 666100     janus Y_svBi_d sami1065  R   15:10:47      2 node[1645,1658]
-
-
-# for file in os.listdir("Crestone/cnode0101.rc.colorado.edu"):
-#     if file.endswith(".rrd"):
-#         print(file)
+from CrestoneExamples import *
 
 
 
-def process(jobid):
+def process(test_case):
+    # JobID should be passed into process then:
+    # Get job cluster and node names
+    # Find job start/stop time
+    # For now test assuming the above steps are done
+    start,stop,cluster_names,node_names,jobid = test_case
+
     #make directory for jobid
-    # if not os.path.exists('/plots/'):
     try:
-      os.makedirs('plots')
+      os.mkdir('plots')
+      os.chmod('plots',0o777)
     except OSError:
       pass
-    # if not os.path.exists('/plots/{j}'.format(j=jobid)):
     try:
-      os.makedirs('plots/{j}'.format(j=jobid))
+      os.mkdir('plots/{j}'.format(j=jobid))
+      os.chmod('plots/{j}'.format(j=jobid),0o777)
     except OSError:
       pass
 
-    #Still need find job start/stop time
-    ################################
-    # 2015-05-13T10:21:00|2015-05-14T09:44:02
-    t1 = '2015-02-13T10:21:00'
-    t2 = '2015-05-14T09:44:02'
-    start = convert_enddate_to_seconds(t1)
-    stop = convert_enddate_to_seconds(t2)
-
-    ## Converting times in Python is terrible!
-    # t = dateutil.parser.parse(t2)
-    # print t
-    # print convert_enddate_to_seconds(t2)
-    # stop = int(time.time())
-    # start = int(stop-9000000)  #4ish months
-    # print start, stop
-
-    #Still nees to get job cluster and node names
-    cluster_names = []
-    node_names = []
-    ##############################
-
-    cluster_names.append('rrds/Crestone')
-    node_names.append('cnode0101')
-    node_names.append('cnode0102')
-    
     #Currently just plotting cpu usage and free memory
     desired_graphs = ['mem_free.rrd', 'cpu_user.rrd']
 
@@ -87,7 +58,7 @@ def graphs(filename, start, stop, nodename, cluster, jobid):
               'LINE1:mem_free#0000FF')
 
     elif filename == 'cpu_user.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g=filename.split('.')[0], n=nodename, j=jobid),
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Percent (%)',
@@ -97,13 +68,19 @@ def graphs(filename, start, stop, nodename, cluster, jobid):
               'LINE1:cpu_user#0000FF')
 
 
-def convert_enddate_to_seconds(ts):
-    # Takes ISO 8601 format(string) and converts into epoch time.
-    # Adding timezones will break this function!
-    timestamp = timegm(time.strptime(ts,'%Y-%m-%dT%H:%M:%S'))
-    return timestamp
+process(CrestoneExample1())
 
-process(654321)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
