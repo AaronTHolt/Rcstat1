@@ -2,18 +2,24 @@ import re
 import os
 import subprocess
 import rrdtool
-import hostlist
+import argparse
+from Get_Data import get_data
 
-from CrestoneExamples import *
+# debug expands the plot time window to 4 months
+# helps check if the graph was supposed to be blank 
+global debug
+# debug = True
+debug = False
 
-
-
-def process(test_case):
-    # JobID should be passed into process then:
+def process(jobid):
+    global debug
+    # JobID should be passed into process then using slurm:
     # Get job cluster and node names
     # Find job start/stop time
     # For now test assuming the above steps are done
-    start,stop,cluster_names,node_names,jobid = test_case
+
+    start, stop, cluster_names, node_names = get_data(jobid, debug)
+    # print cluster_names, node_names
 
     #make directory for jobid
     try:
@@ -30,13 +36,17 @@ def process(test_case):
     #Currently just plotting cpu usage and free memory
     desired_graphs = ['mem_free.rrd', 'cpu_user.rrd']
 
+
+    ## TODO add nodes like 10.16.8.20?
+
     for cluster in cluster_names:
-        for root, dirs, files in os.walk(cluster):
+        for root, dirs, files in os.walk('rrds/{c}'.format(c=cluster)):
             # print root, dirs, files
             for file in files:
-                if file.endswith(".rrd"):
+                if file.endswith(".rrd") and root.endswith("rc.colorado.edu"):
+                    # print len(root.split('.')), root.split('.')
                     node = root.split('.')[0].split('/')[2]
-                    cluster = root.split('.')[0].split('/')[1]
+                    # cluster = root.split('.')[0].split('/')[1]
                     # print node, cluster, node_names
                     if any(node in s for s in node_names):
                         # print node, cluster, node_names
@@ -53,7 +63,7 @@ def graphs(filename, start, stop, nodename, cluster, jobid):
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Amount Free',
-              '--title', 'Free Memory in {n}'.format(n=nodename),
+              '--title', 'Free Memory in {c} - {n}'.format(c=cluster, n=nodename),
               'DEF:mem_free=rrds/{c}/{n}.rc.colorado.edu/mem_free.rrd:sum:AVERAGE'.format(c=cluster, n=nodename),
               'LINE1:mem_free#0000FF')
 
@@ -62,13 +72,22 @@ def graphs(filename, start, stop, nodename, cluster, jobid):
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Percent (%)',
-              '--title', 'CPU used in {n}'.format(n=nodename),
+              '--title', 'CPU used in {c} - {n}'.format(c=cluster, n=nodename),
               '--lower-limit', '-1',
               'DEF:cpu_user=rrds/{c}/{n}.rc.colorado.edu/cpu_user.rrd:sum:AVERAGE'.format(c=cluster, n=nodename),
               'LINE1:cpu_user#0000FF')
+              # '--upper-limit', '95',
 
-
-process(CrestoneExample1())
+if __name__ == "__main__":
+  # process(jobid)
+  parser = argparse.ArgumentParser()
+  parser.add_argument("jobid")
+  args = parser.parse_args()
+  # print int(float(args.jobid))
+  try:
+    process(float(args.jobid))
+  except ValueError:
+    print 'Error: Integer or float jobid only'
 
 
 
