@@ -8,8 +8,8 @@ from Get_Data import get_data
 # debug expands the plot time window to 4 months
 # helps check if the graph was supposed to be blank 
 global debug
-# debug = True
 debug = False
+# debug = True
 
 def process(jobid):
     global debug
@@ -33,50 +33,174 @@ def process(jobid):
     except OSError:
       pass
 
-    #Currently just plotting cpu usage and free memory
-    desired_graphs = ['mem_free.rrd', 'cpu_user.rrd']
+    graphs_gpu = ['mem_free.rrd', 'cpu_user.rrd', 'gpu0_mem_used.rrd', 
+          'gpu0_graphics_speed.rrd', 'rx_bytes_eth0.rrd', 'rx_bytes_eth1.rrd',
+          'tx_bytes_eth0.rrd', 'tx_bytes_eth1.rrd']
 
+    graphs_crestone = ['mem_free.rrd', 'cpu_user.rrd', 'rx_bytes_eth0.rrd', 
+          'rx_bytes_eth1.rrd', 'tx_bytes_eth0.rrd', 'tx_bytes_eth1.rrd']
+          
+    graphs_blanca = ['mem_free.rrd', 'cpu_user.rrd', 'rx_bytes_em1.rrd',
+          'rx_bytes_em2.rrd', 'tx_bytes_em1.rrd', 'tx_bytes_em2.rrd']
+
+    graphs_janus = []
 
     ## TODO add nodes like 10.16.8.20?
+    # for cluster in cluster_names:
+    #     for root, dirs, files in os.walk('rrds/{c}'.format(c=cluster)):
+    #         # print root, dirs, files
+    #         for file in files:
+    #             if file.endswith(".rrd") and root.endswith("rc.colorado.edu"):
+    #                 # print len(root.split('.')), root.split('.')
+    #                 node = root.split('.')[0].split('/')[2]
+    #                 # cluster = root.split('.')[0].split('/')[1]
+    #                 # print node, cluster, node_names
+    #                 if any(node in s for s in node_names):
+    #                     # print node, cluster, node_names
+    #                     # print(os.path.join(root, file))
+    #                     # print file
+    #                     if str(file) in desired_graphs:
+    #                         ## root.split('.')[0] is cluster/nodename
+    #                         # print cluster, node, file
+    #                         graphs(file, start, stop, node, cluster, jobid) 
 
+    graph_list = []
     for cluster in cluster_names:
-        for root, dirs, files in os.walk('rrds/{c}'.format(c=cluster)):
-            # print root, dirs, files
-            for file in files:
-                if file.endswith(".rrd") and root.endswith("rc.colorado.edu"):
-                    # print len(root.split('.')), root.split('.')
-                    node = root.split('.')[0].split('/')[2]
-                    # cluster = root.split('.')[0].split('/')[1]
-                    # print node, cluster, node_names
-                    if any(node in s for s in node_names):
-                        # print node, cluster, node_names
-                        # print(os.path.join(root, file))
-                        # print file
-                        if str(file) in desired_graphs:
-                            ## root.split('.')[0] is cluster/nodename
-                            # print cluster, node, file
-                            graphs(file, start, stop, node, cluster, jobid) 
+        for node in node_names:
+            if cluster == 'Blanca':
+                for graph in graphs_blanca:
+                    path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
+                    graph_list.append([path, start, stop, node, cluster, jobid, graph])
+            elif cluster == 'GPU':
+                for graph in graphs_gpu:
+                    path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
+                    graph_list.append([path, start, stop, node, cluster, jobid, graph])
+            elif cluster == 'Crestone':
+                for graph in graphs_crestone:
+                    path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
+                    graph_list.append([path, start, stop, node, cluster, jobid, graph])
 
-def graphs(filename, start, stop, nodename, cluster, jobid):
-    if filename == 'mem_free.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g=filename.split('.')[0], n=nodename, j=jobid),
+    for data in graph_list:
+        single_graphs(data)
+    # print graph_list
+
+
+def single_graphs(data):
+    path, start, stop, nodename, cluster, jobid, graph_type = data
+    # print data, filename
+    if graph_type == 'mem_free.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='mem_free.rrd', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Amount Free',
               '--title', 'Free Memory in {c} - {n}'.format(c=cluster, n=nodename),
-              'DEF:mem_free=rrds/{c}/{n}.rc.colorado.edu/mem_free.rrd:sum:AVERAGE'.format(c=cluster, n=nodename),
+              'DEF:mem_free={p}:sum:AVERAGE'.format(p=path),
               'LINE1:mem_free#0000FF')
 
-    elif filename == 'cpu_user.rrd':
+    elif graph_type == 'cpu_user.rrd':
         rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Percent (%)',
               '--title', 'CPU used in {c} - {n}'.format(c=cluster, n=nodename),
               '--lower-limit', '-1',
-              'DEF:cpu_user=rrds/{c}/{n}.rc.colorado.edu/cpu_user.rrd:sum:AVERAGE'.format(c=cluster, n=nodename),
+              'DEF:cpu_user={p}:sum:AVERAGE'.format(p=path),
               'LINE1:cpu_user#0000FF')
-              # '--upper-limit', '95',
+    
+    ## GPU statistics
+    elif graph_type == 'gpu0_mem_used.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='gpu0_mem_used', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'GPU memory used in {c} - {n}'.format(c=cluster, n=nodename),
+              '--lower-limit', '-1',
+              'DEF:gpu0_mem_used={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:gpu0_mem_used#0000FF')
+
+    elif graph_type == 'gpu0_graphics_speed.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='gpu0_graphics_speed', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'Graphics Speed in {c} - {n}'.format(c=cluster, n=nodename),
+              '--lower-limit', '-1',
+              'DEF:gpu0_graphics_speed={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:gpu0_graphics_speed#0000FF')
+
+    ## Network statistics (not Blanca)
+    elif graph_type == 'rx_bytes_eth0.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_eth0', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Percent (%)',
+              '--title', 'rx bytes eth0 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:rx_bytes_eth0={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:rx_bytes_eth0#0000FF')
+
+    elif graph_type == 'rx_bytes_eth1.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_eth1', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Percent (%)',
+              '--title', 'rx bytes eth1 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:rx_bytes_eth1={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:rx_bytes_eth1#0000FF')
+
+    elif graph_type == 'tx_bytes_eth0.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_eth0', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Percent (%)',
+              '--title', 'tx bytes eth0 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:tx_bytes_eth0={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:tx_bytes_eth0#0000FF')
+
+    elif graph_type == 'tx_bytes_eth1.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_eth1', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Percent (%)',
+              '--title', 'tx bytes eth1 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:tx_bytes_eth1={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:tx_bytes_eth1#0000FF')
+
+    ## Network statistics (Blanca)
+    elif graph_type == 'rx_bytes_em1.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_em1', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'rx bytes em1 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:rx_bytes_em1={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:rx_bytes_em1#0000FF')
+
+    elif graph_type == 'rx_bytes_em2.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_em2', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'rx bytes em2 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:rx_bytes_em2={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:rx_bytes_em2#0000FF')
+
+    elif graph_type == 'tx_bytes_em1.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_em1', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'tx bytes em1 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:tx_bytes_em1={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:tx_bytes_em1#0000FF')
+
+    elif graph_type == 'tx_bytes_em2.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_em2', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'tx bytes em2 in {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:tx_bytes_em2={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:tx_bytes_em2#0000FF')
 
 if __name__ == "__main__":
   # process(jobid)
@@ -85,55 +209,9 @@ if __name__ == "__main__":
   args = parser.parse_args()
   # print int(float(args.jobid))
   try:
-    process(float(args.jobid))
+      if '.' in args.jobid:
+          process(float(args.jobid))
+      else:
+          process(int(float(args.jobid)))
   except ValueError:
-    print 'Error: Integer or float jobid only'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# rrdtool.graph('mem_free.png',
-#               '--start', "%i" % start,
-#               '--end', "%i" % now,
-#               '--vertical-label', 'Amount Free',
-#               '--title', 'Free Memory',
-#               'DEF:mem_free=cnode0102.rc.colorado.edu/mem_free.rrd:sum:AVERAGE',
-#               'LINE1:mem_free#0000FF')
-
-# rrdtool.graph('mem_dirty.png',
-#               '--start', "%i" % start,
-#               '--end', "%i" % now,
-#               '--vertical-label', 'Amount Dirty',
-#               '--title', 'Dirty Memory',
-#               '--lower-limit', '-3000',
-#               'DEF:mem_dirty=cnode0102.rc.colorado.edu/mem_dirty.rrd:sum:AVERAGE',
-#               'LINE1:mem_dirty#0000FF')
-
-# rrdtool.graph('cpu_user.png',
-#               '--start', "%i" % start,
-#               '--end', "%i" % now,
-#               '--vertical-label', 'Percent (%)',
-#               '--title', 'CPU Used',
-#               '--lower-limit', '-1',
-#               'DEF:cpu_user=cnode0102.rc.colorado.edu/cpu_user.rrd:sum:AVERAGE',
-#               'LINE1:cpu_user#0000FF')
-
-# rrdtool.graph('cpu_idle.png',
-#               '--start', "%i" % start,
-#               '--end', "%i" % now,
-#               '--vertical-label', 'Percent (%)',
-#               '--title', 'CPU Idle',
-#               '--lower-limit', '-1',
-#               'DEF:cpu_idle=cnode0102.rc.colorado.edu/cpu_idle.rrd:sum:AVERAGE',
-#               'LINE1:cpu_idle#0000FF')
+      print 'Error: Integer or float jobid only'

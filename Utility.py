@@ -20,7 +20,7 @@ def convert_cluster_names(cluster_list):
             cluster_names.append('Blanca')
         elif cluster == 'crc-serial':
             cluster_names.append('Crestone')
-        elif cluser == 'crc-gpu':
+        elif cluster == 'crc-gpu':
             cluster_names.append('GPU')
         elif cluster == 'crc-himem':
             cluster_names.append('Himem')
