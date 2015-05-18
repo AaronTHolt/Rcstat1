@@ -34,16 +34,22 @@ def process(jobid):
       pass
 
     graphs_gpu = ['mem_free.rrd', 'cpu_user.rrd', 'gpu0_mem_used.rrd', 
-          'gpu0_graphics_speed.rrd', 'rx_bytes_eth0.rrd', 'rx_bytes_eth1.rrd',
-          'tx_bytes_eth0.rrd', 'tx_bytes_eth1.rrd']
+          'gpu0_graphics_speed.rrd', 'bytes_in.rrd', 'bytes_out.rrd']
 
-    graphs_crestone = ['mem_free.rrd', 'cpu_user.rrd', 'rx_bytes_eth0.rrd', 
-          'rx_bytes_eth1.rrd', 'tx_bytes_eth0.rrd', 'tx_bytes_eth1.rrd']
-          
-    graphs_blanca = ['mem_free.rrd', 'cpu_user.rrd', 'rx_bytes_em1.rrd',
-          'rx_bytes_em2.rrd', 'tx_bytes_em1.rrd', 'tx_bytes_em2.rrd']
+    graphs_crestone = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
+          'bytes_out.rrd']
+
+    graphs_blanca = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
+          'bytes_out.rrd']
 
     graphs_janus = []
+
+  # Other possible graphs:
+  # 'rx_bytes_em1.rrd',
+  # 'rx_bytes_em2.rrd', 'tx_bytes_em1.rrd', 'tx_bytes_em2.rrd',
+  # 'rx_bytes_eth0.rrd', 
+  # 'rx_bytes_eth1.rrd', 'tx_bytes_eth0.rrd', 'tx_bytes_eth1.rrd'
+
 
     ## TODO add nodes like 10.16.8.20?
     # for cluster in cluster_names:
@@ -80,12 +86,22 @@ def process(jobid):
                     path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
                     graph_list.append([path, start, stop, node, cluster, jobid, graph])
 
+    ## TODO: combine netork data into two graphs per node (tx and rx)
+    ## The single graph per tx/rx thing creates too many graphs
+    ## Maybe do this in previous loop?
+    # for data in graph_list:
+    #     a = data[6].split('.')[0]
+    #     if a.startswith('tx'):
+
+    #     elif a.startswith('rx'):
+
+
     for data in graph_list:
-        single_graphs(data)
+        single_node_graphs(data)
     # print graph_list
 
 
-def single_graphs(data):
+def single_node_graphs(data):
     path, start, stop, nodename, cluster, jobid, graph_type = data
     # print data, filename
     if graph_type == 'mem_free.rrd':
@@ -201,6 +217,25 @@ def single_graphs(data):
               '--title', 'tx bytes em2 in {c} - {n}'.format(c=cluster, n=nodename),
               'DEF:tx_bytes_em2={p}:sum:AVERAGE'.format(p=path),
               'LINE1:tx_bytes_em2#0000FF')
+
+    ## General network statistics
+    elif graph_type == 'bytes_in.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'Bytes In for {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:bytes_in={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:bytes_in#0000FF')
+
+    elif graph_type == 'bytes_out.rrd':
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
+              '--start', "{begin}".format(begin=start),
+              '--end', "{end}".format(end=stop),
+              '--vertical-label', 'Bytes',
+              '--title', 'Bytes Out for {c} - {n}'.format(c=cluster, n=nodename),
+              'DEF:bytes_out={p}:sum:AVERAGE'.format(p=path),
+              'LINE1:bytes_out#0000FF')
 
 if __name__ == "__main__":
   # process(jobid)

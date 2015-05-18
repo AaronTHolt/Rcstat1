@@ -36,7 +36,6 @@ def expand_node_list(node_list):
     nodes = []
     for node in node_list:
         nodes.append(hostlist.expand_hostlist(node))
-
     flat_node_list = [item for sublist in nodes for item in sublist]
     # print flat_node_list
     return flat_node_list
