@@ -13,7 +13,6 @@ def convert_enddate_to_seconds(ts):
     timestamp = timegm(time.strptime(ts,'%Y-%m-%dT%H:%M:%S'))
     return timestamp
 
-
 def convert_cluster_names(cluster_list):
     #Make Slurm cluster names match directory names in rrd
     cluster_names = []
@@ -33,7 +32,8 @@ def convert_cluster_names(cluster_list):
 
     return cluster_names
 
-
+# Expands node lists such as 'node[0000-0010],node0015'
+# into individual nodes
 def expand_node_list(node_list):
     nodes = []
     for node in node_list:
@@ -42,10 +42,12 @@ def expand_node_list(node_list):
     # print flat_node_list
     return flat_node_list
 
+# Flattens a list of lists
 def flat_list(a_list):
     a_flat_list = [item for sublist in a_list for item in sublist]
     return a_flat_list
 
+#parses a slurm sacct ouput file
 def parse_job_file(data):
     t1 = ''
     t2 = ''
@@ -67,6 +69,7 @@ def parse_job_file(data):
 
     return t1, t2, node_names, cluster_names
 
+# Returns unique 8bit colors
 def get_colors(num_colors):
     colors=[]
     for i in np.arange(0., 360., 360. / num_colors):
@@ -84,5 +87,6 @@ def get_colors(num_colors):
         # print int(color[0]*255), int(color[1]*255), int(color[2]*255)
     return hex_colors
 
+# Keep colors in 8bit range
 def clamp(x): 
     return max(0, min(x, 255))
