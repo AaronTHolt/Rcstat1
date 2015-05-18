@@ -4,6 +4,8 @@ import time
 from calendar import timegm
 from datetime import datetime
 import hostlist
+import numpy as np
+import colorsys
 
 def convert_enddate_to_seconds(ts):
     # Takes ISO 8601 format(string) and converts into epoch time.
@@ -40,6 +42,9 @@ def expand_node_list(node_list):
     # print flat_node_list
     return flat_node_list
 
+def flat_list(a_list):
+    a_flat_list = [item for sublist in a_list for item in sublist]
+    return a_flat_list
 
 def parse_job_file(data):
     t1 = ''
@@ -61,3 +66,23 @@ def parse_job_file(data):
         line_number += 1
 
     return t1, t2, node_names, cluster_names
+
+def get_colors(num_colors):
+    colors=[]
+    for i in np.arange(0., 360., 360. / num_colors):
+        hue = i/360.
+        lightness = (50 + np.random.rand() * 10)/100.
+        saturation = (90 + np.random.rand() * 10)/100.
+        colors.append(colorsys.hls_to_rgb(hue, lightness, saturation))
+
+    hex_colors = []
+    for color in colors:
+        hex_colors.append("#{0:02x}{1:02x}{2:02x}".format(
+            clamp(int(color[0]*255)),  #r
+            clamp(int(color[1]*255)),  #g
+            clamp(int(color[2]*255)))) #b
+        # print int(color[0]*255), int(color[1]*255), int(color[2]*255)
+    return hex_colors
+
+def clamp(x): 
+    return max(0, min(x, 255))
