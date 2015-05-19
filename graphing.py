@@ -75,44 +75,49 @@ def process(jobid):
     all_node_graph(start, stop, jobid, node_names, cluster, graph_list)
 
 def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
-    # graph types are currently: average, all
-    # average is all lines but only averages plotted
+    # graph types are currently: avg, all
+    # avg is averages plotted
     # all is all lines on one plot
 
     header = ['plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
                   r=rrd_type, g=graph_type, i=index),
                   '--start', "{begin}".format(begin=start),
-                  '--end', "{end}".format(end=stop),
-                  '--color', "CANVAS#000000[00]",
-                  '--color', "MGRID#FFFFFF[00]",
-                  '--color', "GRID#FF0000[00]",]
+                  '--end', "{end}".format(end=stop)]
+                  # '--color', "CANVAS#000000[00]",
+                  # '--color', "MGRID#FFFFB0[80]",
+                  # '--color', "GRID#FFFFB0[A0]",
+                  # '--color', "FONT#FFFFFF[00]",
+                  # '--color', "SHADEA#000000[00]",
+                  # '--color', "SHADEB#000000[00]",
+                  # '--color', "BACK#000000[00]"
+
     title_modifier = ''
-    if rrd_type == 'mem_free.rrd':
+    if rrd_type == 'mem_free':
         header += ['--vertical-label', 'Amount Free']
         if graph_type == 'avg':
             title_modifier = 'Average '
         header += ['--title', '{m}Free Memory in {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
-    elif rrd_type == 'cpu_used.rrd':
+    elif rrd_type == 'cpu_used':
         header += ['--vertical-label', 'Percent (%)']
         if graph_type == 'avg':
             title_modifier = 'Average '
         header += ['--title', '{m}CPU used in {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
-    elif rrd_type == 'bytes_out.rrd':
+    elif rrd_type == 'bytes_out':
         header += ['--vertical-label', 'Bytes']
         if graph_type == 'avg':
             title_modifier = 'Average '
         header += ['--title', '{m}Network Out for {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
-    elif rrd_type == 'bytes_in.rrd':
+    elif rrd_type == 'bytes_in':
         header += ['--vertical-label', 'Bytes']
         if graph_type == 'avg':
             title_modifier = 'Average '
         header += ['--title', '{m}Network In for {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
 
-    # print header
+    print header
     return header
 
 
@@ -210,7 +215,7 @@ def graphit(start, stop, jobid, node_names, cluster,
 
 def all_average_graph(start, stop, jobid, node_names, cluster, 
                 graph_list, num_colors):
-    color_list = get_colors(num_colors*2)
+    color_list = get_colors(num_colors)
     thickness = 'LINE1'
 
     mem_free_sources = []
@@ -235,7 +240,7 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
             # mem_free_format.append('{L}:mem_free{i}{color}:{n}'.format(
             #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
             mem_free_format.append('{L}:mem_free_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter+1], n=data[1]))
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
         elif data[4] == 'cpu_user.rrd':
             cpu_used_sources.append('DEF:cpu_user{i}={p}:sum:AVERAGE'.format(
                   i=counter, p=data[0]))
@@ -243,7 +248,7 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
             # cpu_used_format.append('{L}:cpu_user{i}{color}:{n}'.format(
             #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
             cpu_used_format.append('{L}:cpu_user_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter+1], n=data[1]))
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
         elif data[4] == 'bytes_in.rrd':
             bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
                   i=counter, p=data[0]))
@@ -251,7 +256,7 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
             # bytes_in_format.append('{L}:bytes_in{i}{color}:{n}'.format(
             #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
             bytes_in_format.append('{L}:bytes_in_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter+1], n=data[1]))
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
         elif data[4] == 'bytes_out.rrd':
             bytes_out_sources.append('DEF:bytes_out{i}={p}:sum:AVERAGE'.format(
                   i=counter, p=data[0]))
@@ -259,8 +264,8 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
             # bytes_out_format.append('{L}:bytes_out{i}{color}:{n}'.format(
             #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
             bytes_out_format.append('{L}:bytes_out_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter+1], n=data[1]))
-            counter += 2
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
     mem_free_header = graph_header(start,stop,jobid,cluster,'avg','mem_free',0)
@@ -282,7 +287,7 @@ def single_node_graphs(start, stop, data):
     path, nodename, cluster, jobid, graph_type = data
     # print data, filename
     if graph_type == 'mem_free.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='mem_free.rrd', n=nodename, j=jobid),
+        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Amount Free',
