@@ -7,11 +7,10 @@ import os
 import Image
 import StringIO
 
-# from graphing import *
+from graphing import *
 from emailrrd import send_email
 
 # configuration
-DATABASE = '/tmp/flaskr.db'
 DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'admin'
@@ -24,10 +23,9 @@ app.config.from_object(__name__)
 # app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 
-## Display blog posts (stored in sqlite db)
+## Display main page
 @app.route('/')
 def show_entries():
-
     return render_template('show_entries.html')
 
 ## Button that goes to the graphs
@@ -38,16 +36,40 @@ def redirect_to_graphs():
     return render_template('graph_page.html')
     # return app.send_static_file('speed4.png')
 
-## Submit onclick
-@app.route('/graph_button2', methods=['POST'])
-def redirect_to_graphs2():
+## Submit jobid button
+@app.route('/graph_summary', methods=['POST'])
+def redirect_to_summary_graphs():
     if not session.get('logged_in'):
         abort(401)
-    images = []
-    WIDTH = 1000
-    HEIGHT = 800
-    error = None
+    return redirect_to_graphs2('all')
 
+## CPU button
+@app.route('/graph_select', methods=['POST'])
+def graph_selection():
+    if not session.get('logged_in'):
+        abort(401)
+    # graph_type = 'cpu'
+    graph_type = request.form['action']
+    jobid = session['jobid']
+    category = ''
+    if graph_type == 'all' or graph_type == 'avg':
+        category = ''
+    else:
+        category = 'node'
+
+    images = get_images(jobid, graph_type, category)
+    error = None
+    return render_template('all_graph.html', images=images, 
+                            jobid=jobid, error=error)
+
+
+## After submit button or buttons on all_graph
+# @app.route('/graph_button2', methods=['POST'])
+def redirect_to_graphs2(graph_type):
+    if not session.get('logged_in'):
+        abort(401)
+
+    error = None
     jobid = request.form['text']
 
     # Empty input
@@ -57,39 +79,22 @@ def redirect_to_graphs2():
 
     ## TODO: sanitize input
     ## no input, letters input, html input
-
     #jobid = sanitize(jobid)
 
-    for root, dirs, files in os.walk('.'):
-        for filename in [os.path.join(root, name) for name in files]:
-            # if not '519035' in filename:
-            #     continue
-            if not jobid in filename:
-                continue
-            if not 'all' in filename:
-                continue
-            if not filename.endswith('.png'):
-                continue
-            im = Image.open(filename)
-            w, h = im.size
-            aspect = 1.0*w/h
-            if aspect > 1.0*WIDTH/HEIGHT:
-                width = min(w, WIDTH)
-                height = width/aspect
-            else:
-                height = min(h, HEIGHT)
-                width = height*aspect
-            images.append({
-                'width': int(width),
-                'height': int(height),
-                'src': filename
-            })
+    # Generate graphs
+    process(jobid)
+
+    images = get_images(jobid, graph_type, 'all')
+    session['jobid'] = jobid
+
+    # images = sorted(images)
     ## TODO: raise exception that a job wasn't found...
     # Input that wasn't a job
     if len(images)<2:
         error = 'No matching Job ID found'
         return render_template('show_entries.html', error=error)
-    return render_template('all_graph.html', images=images, error=error)
+    return render_template('all_graph.html', images=images, 
+                            jobid=jobid, error=error)
 
 ## Button back to blog page
 @app.route('/blog', methods=['POST'])
@@ -128,6 +133,46 @@ def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
     return redirect(url_for('show_entries'))
+
+def get_images(jobid, graph_type, category):
+    images = []
+    WIDTH = 1000
+    HEIGHT = 800
+    for root, dirs, files in os.walk('flaskr/static/'):
+    # for root, dirs, files in os.walk('.'):
+        # print root, dirs, files
+        for filename in [os.path.join(root, name) for name in files]:
+            # print filename, jobid, graph_type, category
+            # if not '519035' in filename:
+            #     continue
+            if not '/'+str(jobid)+'/' in filename:
+                continue
+            if not category in filename:
+                continue
+            if not graph_type in filename:
+                continue
+            if not filename.endswith('.png'):
+                continue
+            im = Image.open(filename)
+            w, h = im.size
+            aspect = 1.0*w/h
+            if aspect > 1.0*WIDTH/HEIGHT:
+                width = min(w, WIDTH)
+                height = width/aspect
+            else:
+                height = min(h, HEIGHT)
+                width = height*aspect
+            temp = filename.split('/')
+            filename = temp[1]+'/'+temp[2]+'/'+temp[3]+'/'+temp[4]
+            images.append({
+                'width': int(width),
+                'height': int(height),
+                'src': filename
+            })
+    images = sorted(images)
+    if graph_type == 'all' or graph_type == 'avg':
+        images = sorted(images, reverse=True)
+    return images
 
 ## Next 2 sections make it so any time url_for is used
 ## the cache is reset (so the graphs update)

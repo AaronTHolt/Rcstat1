@@ -1,12 +1,15 @@
 {% extends "layout.html" %}
 {% block body %}
   {% if session.logged_in %}
-   <form action="{{ url_for('redirect_to_graphs') }}" method=post class=redirect-to-graphs>
+<!--    <form action="{{ url_for('redirect_to_graphs') }}" method=post class=redirect-to-graphs>
       <dl>
         <dd><input type=submit value=Graphs> 
       <dl>
-   </form>
-   <form action="{{ url_for('redirect_to_graphs2') }}" method=post class=get-job-graphs>
+   </form> -->
+
+   <!-- On ENTER should submit instead of newline in textbox -->
+
+   <form action="{{ url_for('redirect_to_summary_graphs') }}" method=post class=get-job-graphs>
       <dl>
         <dt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Enter Job ID:
         <dd><textarea name=text rows=1 cols=50></textarea>

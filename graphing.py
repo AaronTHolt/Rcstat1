@@ -25,13 +25,13 @@ def process(jobid):
 
     #make directory for jobid
     try:
-        os.mkdir('plots')
-        os.chmod('plots',0o777)
+        os.mkdir('flaskr/static/plots')
+        os.chmod('flaskr/static/plots',0o777)
     except OSError:
         pass
     try:
-        os.mkdir('plots/{j}'.format(j=jobid))
-        os.chmod('plots/{j}'.format(j=jobid),0o777)
+        os.mkdir('flaskr/static/plots/{j}'.format(j=jobid))
+        os.chmod('flaskr/static/plots/{j}'.format(j=jobid),0o777)
     except OSError:
         pass
 
@@ -79,7 +79,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
     # avg is averages plotted
     # all is all lines on one plot
 
-    header = ['plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
+    header = ['flaskr/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
                   r=rrd_type, g=graph_type, i=index),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop)]
@@ -117,7 +117,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
         header += ['--title', '{m}Network In for {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
 
-    print header
+    # print header
     return header
 
 
@@ -286,8 +286,11 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
 def single_node_graphs(start, stop, data):
     path, nodename, cluster, jobid, graph_type = data
     # print data, filename
+    if 'himem' in nodename:
+        nodename ='node' + nodename
+
     if graph_type == 'mem_free.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
+        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Amount Free',
@@ -296,7 +299,7 @@ def single_node_graphs(start, stop, data):
               'LINE2:mem_free#0000FF')
 
     elif graph_type == 'cpu_user.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
+        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Percent (%)',
@@ -307,7 +310,7 @@ def single_node_graphs(start, stop, data):
 
     ## General network statistics
     elif graph_type == 'bytes_in.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
+        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
@@ -316,7 +319,7 @@ def single_node_graphs(start, stop, data):
               'LINE2:bytes_in#0000FF')
 
     elif graph_type == 'bytes_out.rrd':
-        rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
+        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
