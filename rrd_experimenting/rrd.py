@@ -52,6 +52,8 @@ while True:
 	DEF:mytemp1=temptrax.rrd:Core1:MAX \
 	DEF:mytemp2=temptrax.rrd:Core2:MAX \
 	DEF:mytemp3=temptrax.rrd:Core3:MAX \
+	GPRINT:maxtotal:MAX:"MaxMax\:%6.2lf %s"  \
+	COMMENT:"\\n" \
 	LINE2:mytemp#0000FF:"Core1  " \
 	GPRINT:mytemp:LAST:"Current\:%6.2lf %s"  \
 	GPRINT:mytemp:AVERAGE:"Average\:%6.2lf %s"  \

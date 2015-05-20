@@ -17,6 +17,7 @@ def get_data(jobid, debug):
     node_names = expand_node_list(node_names)
     
     # Use 4 month window for debugging
+    # debug = True
     if debug:
         t1 = '2015-01-13T10:21:00'
         t2 = '2015-05-14T09:44:02'

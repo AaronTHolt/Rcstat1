@@ -160,6 +160,7 @@ def graphit(start, stop, jobid, node_names, cluster,
     color_list = get_colors(num_colors)
     # print color_list
     num_colors = num_colors - index*Max_Lines
+
     if num_colors<4:
         thickness = 'LINE2'
     else:
