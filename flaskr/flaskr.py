@@ -52,6 +52,7 @@ def graph_selection():
     # graph_type = 'cpu'
     graph_type = request.form['action']
     jobid = session['jobid']
+
     category = ''
     if graph_type == 'all' or graph_type == 'avg':
         category = ''
@@ -60,8 +61,8 @@ def graph_selection():
 
     images = get_images(jobid, graph_type, category)
     error = None
-    return render_template('all_graph.html', images=images, 
-                            jobid=jobid, error=error)
+    return render_template('all_graph.html', images=images, jobid=jobid,
+                             error=error, gpu_param=session['gpu_param'])
 
 
 ## After submit button or buttons on all_graph
@@ -82,8 +83,14 @@ def redirect_to_graphs2(graph_type):
     ## no input, letters input, html input
     #jobid = sanitize(jobid)
 
-    # Generate graphs
-    process(jobid)
+
+    # Generate graphs, if gpu job returns true
+    try:
+        gpu_param = process(jobid)
+        session['gpu_param'] = gpu_param
+    except IOError:
+        error = 'No matching Job ID found'
+        return render_template('show_entries.html', error=error)
 
     images = get_images(jobid, graph_type, 'all')
     session['jobid'] = jobid
@@ -95,7 +102,7 @@ def redirect_to_graphs2(graph_type):
         error = 'No matching Job ID found'
         return render_template('show_entries.html', error=error)
     return render_template('all_graph.html', images=images, 
-                            jobid=jobid, error=error)
+                            jobid=jobid, error=error, gpu_param=gpu_param)
 
 ## Button back to blog page
 @app.route('/blog', methods=['POST'])

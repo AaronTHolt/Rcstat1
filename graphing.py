@@ -38,14 +38,13 @@ def process(jobid):
     desired_graphs = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
           'bytes_out.rrd']
 
-    # graphs_gpu = ['mem_free.rrd', 'cpu_user.rrd', 'gpu0_mem_used.rrd', 
-    #       'gpu0_graphics_speed.rrd', 'bytes_in.rrd', 'bytes_out.rrd']
-    # graphs_crestone = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
-    #       'bytes_out.rrd']
-    # graphs_blanca = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
-    #       'bytes_out.rrd']
-    # graphs_himem = []
-    # graphs_janus = []
+    #If this is a GPU job, add gpu graphs
+    gpu_param = False
+    for node in node_names:
+        if 'gpu' in node:
+            gpu_param = True
+            desired_graphs = ['gpu0_mem_util.rrd', 'gpu0_util.rrd'] + desired_graphs
+            break
 
     graph_list = []
     for cluster in cluster_names:
@@ -54,27 +53,17 @@ def process(jobid):
                 path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
                 graph_list.append([path, node, cluster, jobid, graph])
 
-            # if cluster == 'Blanca':
-            #     for graph in graphs_blanca:
-            #         path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
-            #         graph_list.append([path, node, cluster, jobid, graph])
-            # elif cluster == 'GPU':
-            #     for graph in graphs_gpu:
-            #         path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
-            #         graph_list.append([path, node, cluster, jobid, graph])
-            # elif cluster == 'Crestone':
-            #     for graph in graphs_crestone:
-            #         path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
-            #         graph_list.append([path, node, cluster, jobid, graph])
-
-
     for data in graph_list:
-        single_node_graphs(start, stop, data)
+        single_node_graphs(start, stop, data, gpu_param)
     # print graph_list
 
-    all_node_graph(start, stop, jobid, node_names, cluster, graph_list)
+    all_node_graph(start, stop, jobid, node_names, cluster, 
+                    graph_list, gpu_param)
 
-def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
+    return gpu_param
+
+def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
+                  index, gpu_param):
     # graph types are currently: avg, all
     # avg is averages plotted
     # all is all lines on one plot
@@ -91,6 +80,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
                   # '--color', "SHADEB#000000[00]",
                   # '--color', "BACK#000000[00]"
 
+
     title_modifier = ''
     if rrd_type == 'mem_free':
         header += ['--vertical-label', 'Amount Free']
@@ -103,6 +93,18 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
         if graph_type == 'avg':
             title_modifier = 'Average '
         header += ['--title', '{m}CPU used in {c} Nodes'.format(
+                  m=title_modifier, c=cluster)]
+    elif rrd_type == 'gpu0_util':
+        header += ['--vertical-label', 'Percent (%)']
+        if graph_type == 'avg':
+            title_modifier = 'Average '
+        header += ['--title', '{m}GPU used in {c} Nodes'.format(
+                  m=title_modifier, c=cluster)]
+    elif rrd_type == 'gpu0_mem_util':
+        header += ['--vertical-label', 'Percent (%)']
+        if graph_type == 'avg':
+            title_modifier = 'Average '
+        header += ['--title', '{m}GPU Memory used in {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
     elif rrd_type == 'bytes_out':
         header += ['--vertical-label', 'Bytes']
@@ -121,7 +123,8 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,index):
     return header
 
 
-def all_node_graph(start, stop, jobid, node_names, cluster, graph_list):
+def all_node_graph(start, stop, jobid, node_names, cluster, 
+                  graph_list, gpu_param):
 
     # Count how many lines are on a graph
     # Split list into lists of Max_Lines
@@ -140,23 +143,26 @@ def all_node_graph(start, stop, jobid, node_names, cluster, graph_list):
     # and keep max 10 plots on a graph
     if num_colors > Max_Lines:
         all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors)
+                graph_list, num_colors, gpu_param)
         for index in graph_dict:
             graphit(start, stop, jobid, node_names, cluster,
-                    graph_dict[index], index, num_colors, Max_Lines)
+                    graph_dict[index], index, num_colors, 
+                    Max_Lines, gpu_param)
+
     else:
         ## REMOVE THIS WHEN YOU FIND JOBS>10 NODES TO TEST ON
         ##
         all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors)
+                graph_list, num_colors, gpu_param)
         ##
         graphit(start, stop, jobid, node_names, cluster,
-                graph_dict[index], index, num_colors, Max_Lines)
+                graph_dict[index], index, num_colors, 
+                Max_Lines, gpu_param)
 
 
 
-def graphit(start, stop, jobid, node_names, cluster, 
-              graph_list, index, num_colors, Max_Lines):
+def graphit(start, stop, jobid, node_names, cluster, graph_list, 
+              index, num_colors, Max_Lines, gpu_param):
     color_list = get_colors(num_colors)
     # print color_list
     num_colors = num_colors - index*Max_Lines
@@ -170,6 +176,10 @@ def graphit(start, stop, jobid, node_names, cluster,
     mem_free_format = []
     cpu_used_sources = []
     cpu_used_format = []
+    gpu_used_sources = []
+    gpu_used_format = []
+    gpu_mem_used_sources = []
+    gpu_mem_used_format = []
     bytes_out_sources = []
     bytes_out_format = []
     bytes_in_sources = []
@@ -188,6 +198,16 @@ def graphit(start, stop, jobid, node_names, cluster,
                   i=counter, p=data[0]))
             cpu_used_format.append('{L}:cpu_user{i}{color}:{n}'.format(
                   L=thickness, i=counter, color=color_list[counter], n=data[1]))
+        elif data[4] == 'gpu0_util.rrd':
+            gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
+                  i=counter, p=data[0]))
+            gpu_used_format.append('{L}:gpu0_util{i}{color}:{n}'.format(
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
+        elif data[4] == 'gpu0_mem_util.rrd':
+            gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
+                  i=counter, p=data[0]))
+            gpu_mem_used_format.append('{L}:gpu0_mem_util{i}{color}:{n}'.format(
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
         elif data[4] == 'bytes_in.rrd':
             bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
                   i=counter, p=data[0]))
@@ -201,21 +221,34 @@ def graphit(start, stop, jobid, node_names, cluster,
             counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
-    mem_free_header = graph_header(start,stop,jobid,cluster,'all','mem_free',index)
+    mem_free_header = graph_header(start,stop,jobid,cluster,'all',
+                                  'mem_free',index,gpu_param)
     mem_free_graph = mem_free_header + mem_free_sources + mem_free_format
-    cpu_used_header = graph_header(start,stop,jobid,cluster,'all','cpu_used',index)
+    cpu_used_header = graph_header(start,stop,jobid,cluster,'all',
+                                  'cpu_used',index,gpu_param)
     cpu_used_graph = cpu_used_header + cpu_used_sources + cpu_used_format
-    bytes_in_header = graph_header(start,stop,jobid,cluster,'all','bytes_in',index)
+    gpu_used_header = graph_header(start,stop,jobid,cluster,'all',
+                                  'gpu0_util',index,gpu_param)
+    gpu_used_graph = gpu_used_header + gpu_used_sources + gpu_used_format
+    gpu_mem_used_header = graph_header(start,stop,jobid,cluster,'all',
+                                  'gpu0_mem_util',index,gpu_param)
+    gpu_mem_used_graph = gpu_mem_used_header + gpu_mem_used_sources + gpu_mem_used_format
+    bytes_in_header = graph_header(start,stop,jobid,cluster,'all',
+                                  'bytes_in',index,gpu_param)
     bytes_in_graph = bytes_in_header + bytes_in_sources + bytes_in_format
-    bytes_out_header = graph_header(start,stop,jobid,cluster,'all','bytes_out',index)
+    bytes_out_header = graph_header(start,stop,jobid,cluster,'all',
+                                  'bytes_out',index,gpu_param)
     bytes_out_graph = bytes_out_header + bytes_out_sources + bytes_out_format
     rrdtool.graph(mem_free_graph)
     rrdtool.graph(cpu_used_graph)
     rrdtool.graph(bytes_out_graph)
     rrdtool.graph(bytes_in_graph)
+    if gpu_param:
+        rrdtool.graph(gpu_used_graph)
+        rrdtool.graph(gpu_mem_used_graph)
 
 def all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors):
+                graph_list, num_colors, gpu_param):
     color_list = get_colors(num_colors)
     thickness = 'LINE1'
 
@@ -223,6 +256,10 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
     mem_free_format = []
     cpu_used_sources = []
     cpu_used_format = []
+    gpu_used_sources = []
+    gpu_used_format = []
+    gpu_mem_used_sources = []
+    gpu_mem_used_format = []
     bytes_out_sources = []
     bytes_out_format = []
     bytes_in_sources = []
@@ -250,6 +287,18 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
             #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
             cpu_used_format.append('{L}:cpu_user_avg{i}{color}:{n}AVG'.format(
                   L=thickness, i=counter, color=color_list[counter], n=data[1]))
+        elif data[4] == 'gpu0_util.rrd':
+            gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
+                  i=counter, p=data[0]))
+            gpu_used_sources.append('VDEF:gpu_used_avg{i}=gpu0_util{i},AVERAGE'.format(i=counter))
+            gpu_used_format.append('{L}:gpu_used_avg{i}{color}:{n}AVG'.format(
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
+        elif data[4] == 'gpu0_mem_util.rrd':
+            gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
+                  i=counter, p=data[0]))
+            gpu_mem_used_sources.append('VDEF:gpu_mem_used_avg{i}=gpu0_mem_util{i},AVERAGE'.format(i=counter))
+            gpu_mem_used_format.append('{L}:gpu_mem_used_avg{i}{color}:{n}AVG'.format(
+                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
         elif data[4] == 'bytes_in.rrd':
             bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
                   i=counter, p=data[0]))
@@ -269,22 +318,37 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
             counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
-    mem_free_header = graph_header(start,stop,jobid,cluster,'avg','mem_free',0)
+    mem_free_header = graph_header(start,stop,jobid,cluster,'avg',
+                                  'mem_free',0,gpu_param)
     mem_free_graph = mem_free_header + mem_free_sources + mem_free_format
-    cpu_used_header = graph_header(start,stop,jobid,cluster,'avg','cpu_used',0)
+    cpu_used_header = graph_header(start,stop,jobid,cluster,'avg',
+                                  'cpu_used',0,gpu_param)
     cpu_used_graph = cpu_used_header + cpu_used_sources + cpu_used_format
-    bytes_in_header = graph_header(start,stop,jobid,cluster,'avg','bytes_in',0)
+    gpu_used_header = graph_header(start,stop,jobid,cluster,'avg',
+                                  'gpu_used',0,gpu_param)
+    gpu_used_graph = gpu_used_header + gpu_used_sources + gpu_used_format
+    gpu_mem_used_header = graph_header(start,stop,jobid,cluster,'avg',
+                                  'gpu_mem_used',0,gpu_param)
+    gpu_mem_used_graph = gpu_mem_used_header + gpu_mem_used_sources + gpu_mem_used_format
+    bytes_in_header = graph_header(start,stop,jobid,cluster,'avg',
+                                  'bytes_in',0,gpu_param)
     bytes_in_graph = bytes_in_header + bytes_in_sources + bytes_in_format
-    bytes_out_header = graph_header(start,stop,jobid,cluster,'avg','bytes_out',0)
+    bytes_out_header = graph_header(start,stop,jobid,cluster,'avg',
+                                  'bytes_out',0,gpu_param)
     bytes_out_graph = bytes_out_header + bytes_out_sources + bytes_out_format
     # print mem_free_graph
     rrdtool.graph(mem_free_graph)
     rrdtool.graph(cpu_used_graph)
     rrdtool.graph(bytes_out_graph)
     rrdtool.graph(bytes_in_graph)
+    if gpu_param:
+        rrdtool.graph(gpu_used_graph)
+        print "HI!", gpu_mem_used_sources
+        print gpu_mem_used_graph
+        rrdtool.graph(gpu_mem_used_graph)
 
 
-def single_node_graphs(start, stop, data):
+def single_node_graphs(start, stop, data, gpu_param):
     path, nodename, cluster, jobid, graph_type = data
     # print data, filename
     if 'himem' in nodename:
@@ -327,6 +391,24 @@ def single_node_graphs(start, stop, data):
               '--title', 'Bytes Out for {c} - {n}'.format(c=cluster, n=nodename),
               'DEF:bytes_out={p}:sum:AVERAGE'.format(p=path),
               'LINE2:bytes_out#0000FF')
+
+    if gpu_param:
+        if graph_type == 'gpu0_util.rrd':
+            rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
+                  '--start', "{begin}".format(begin=start),
+                  '--end', "{end}".format(end=stop),
+                  '--vertical-label', 'Percent (%)',
+                  '--title', 'GPU used in {c} - {n}'.format(c=cluster, n=nodename),
+                  'DEF:gpu0_util={p}:sum:AVERAGE'.format(p=path),
+                  'LINE2:gpu0_util#0000FF')
+        if graph_type == 'gpu0_mem_util.rrd':
+            rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
+                  '--start', "{begin}".format(begin=start),
+                  '--end', "{end}".format(end=stop),
+                  '--vertical-label', 'Percent (%)',
+                  '--title', 'GPU Memory used in {c} - {n}'.format(c=cluster, n=nodename),
+                  'DEF:gpu0_mem_util={p}:sum:AVERAGE'.format(p=path),
+                  'LINE2:gpu0_mem_util#0000FF')
 
 if __name__ == "__main__":
   # process(jobid)
