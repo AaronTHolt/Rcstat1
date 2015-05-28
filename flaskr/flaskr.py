@@ -4,7 +4,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 from contextlib import closing
 import os
-import Image
+from PIL import Image
 import StringIO
 
 from graphing import *
@@ -199,4 +199,5 @@ def dated_url_for(endpoint, **values):
 
 
 if __name__ == '__main__':
-    app.run()
+    # app.run()
+    app.run(host='0.0.0.0', debug = False)

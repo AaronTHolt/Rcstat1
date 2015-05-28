@@ -3,8 +3,12 @@
 from Utility import *
 
 def get_data(jobid, debug):
-    # Data from job 660771
-    with open('test_cases/jobs/{j}.txt'.format(j=jobid), 'r') as f:
+
+    cmd = 'sacct -P -j {j} -o Start,End,Nodelist,Partition,JobId > sacct_output/{j}.txt'.format(j=jobid)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out, err = p.communicate()
+
+    with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
         data = f.read()
     f.close()
 

@@ -5,7 +5,7 @@ import rrdtool
 import argparse
 from collections import defaultdict
 from Get_Data import get_data
-from Utility import flat_list, get_colors
+from Utility import flat_list, get_colors, get_rackname
 
 # debug expands the plot time window to 4 months
 # helps check if the graph was supposed to be blank 
@@ -48,10 +48,24 @@ def process(jobid):
 
     graph_list = []
     for cluster in cluster_names:
-        for node in node_names:
-            for graph in desired_graphs:
-                path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(c=cluster, n=node, g=graph)
-                graph_list.append([path, node, cluster, jobid, graph])
+        #account for jobs on multiple racks of Janus Compute
+        if cluster == 'Janus':
+            for node in node_names:
+                rackname = get_rackname(node)
+                for graph in desired_graphs:
+                    # path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                    #                       c=cluster, n=node, g=graph)
+                    path = '/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                                          c=rackname, n=node, g=graph)
+                    graph_list.append([path, node, rackname, jobid, graph])
+        else:
+            for node in node_names:
+                for graph in desired_graphs:
+                    # path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                    #                       c=cluster, n=node, g=graph)
+                    path = '/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                                          c=cluster, n=node, g=graph)
+                    graph_list.append([path, node, cluster, jobid, graph])
 
     for data in graph_list:
         single_node_graphs(start, stop, data, gpu_param)

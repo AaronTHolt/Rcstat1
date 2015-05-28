@@ -90,3 +90,7 @@ def get_colors(num_colors):
 # Keep colors in 8bit range
 def clamp(x): 
     return max(0, min(x, 255))
+
+def get_rackname(node_number):
+    rackname = 'Rack ' + node_number[4:6]
+    return rackname
