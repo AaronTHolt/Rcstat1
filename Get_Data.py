@@ -31,7 +31,10 @@ def get_data(jobid, debug):
         t2 = '2015-05-29T12:44:02'
 
     start = convert_enddate_to_seconds(t1)
-    stop = convert_enddate_to_seconds(t2)
+    try:
+        stop = convert_enddate_to_seconds(t2)
+    except ValueError:
+        stop = 'now'
     # print start, stop
 
     return start, stop, cluster_names, node_names

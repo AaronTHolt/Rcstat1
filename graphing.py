@@ -16,14 +16,11 @@ debug = False
 
 def process(jobid):
     global debug
-    # JobID should be passed into process then using slurm:
-    # Get job cluster and node names
-    # Find job start/stop time
-    # For now test assuming the above steps are done
 
+    # Get job information from slurm
     start, stop, cluster_names, node_names = get_data(jobid, debug)
     # print cluster_names, node_names
-    print start, stop
+    # print start, stop
 
     #make directory for jobid
     try:
@@ -69,19 +66,24 @@ def process(jobid):
                                           c=cluster, n=node, g=graph)
                     graph_list.append([path, node, cluster, jobid, graph])
     
+    # for data in graph_list:
+    #     print data[1]
+
     missing_set = Set()
     for data in graph_list:
         try:    
             single_node_graphs(start, stop, data, gpu_param)
         except rrdtool.error:
             missing_set.add(data[1])
-    print missing_set    
+    print "Missing =", len(missing_set), missing_set
+    # print "Nodes Used =", len(Set(node_names)-missing_set), Set(node_names)-missing_set    
+
 # print graph_list
 
     all_node_graph(start, stop, jobid, node_names, cluster, 
                     graph_list, gpu_param, missing_set)
 
-    return gpu_param
+    return gpu_param, missing_set
 
 def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   index, gpu_param):
@@ -92,7 +94,9 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
     header = ['flaskr/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
                   r=rrd_type, g=graph_type, i=index),
                   '--start', "{begin}".format(begin=start),
-                  '--end', "{end}".format(end=stop)]
+                  '--end', "{end}".format(end=stop),
+                  '--slope-mode']
+
                   # '--color', "CANVAS#000000[00]",
                   # '--color', "MGRID#FFFFB0[80]",
                   # '--color', "GRID#FFFFB0[A0]",
@@ -154,18 +158,25 @@ def all_node_graph(start, stop, jobid, node_names, cluster,
     graph_dict = defaultdict(list)
     num_colors = 0
     for data in graph_list:
-        graph_dict[index].append(data)
-        if num_colors > Max_Lines:
-            index += 1
-        if data[4] == 'bytes_out.rrd':
-            num_colors += 1
+        if data[1] in missing_set:
+            pass
+        else:
+            graph_dict[index].append(data)
+            if data[4] == 'bytes_out.rrd':
+                num_colors += 1
+            if num_colors >= Max_Lines + Max_Lines * index:
+                index += 1
 
+
+    # print "NUMBER OF LINES IN THEORY ", num_colors
+    # print "INDEX ", index
     # if more than 10 nodes used, generate average plot
     # and keep max 10 plots on a graph
     if num_colors > Max_Lines:
         all_average_graph(start, stop, jobid, node_names, cluster, 
                 graph_list, num_colors, gpu_param, missing_set)
         for index in graph_dict:
+            # print "WENT HERE", index
             graphit(start, stop, jobid, node_names, cluster,
                     graph_dict[index], index, num_colors, 
                     Max_Lines, gpu_param, missing_set)
@@ -184,14 +195,18 @@ def all_node_graph(start, stop, jobid, node_names, cluster,
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 
               index, num_colors, Max_Lines, gpu_param, missing_set):
-    color_list = get_colors(num_colors)
-    # print color_list
-    num_colors = num_colors - index*Max_Lines
-
-    if num_colors<4:
-        thickness = 'LINE2'
+    # print "IN GRAPHIT"
+    if num_colors - index*Max_Lines > Max_Lines:
+        num_colors = Max_Lines
     else:
-        thickness = 'LINE1'
+        num_colors = num_colors - index*Max_Lines
+    color_list = get_colors(num_colors)
+
+
+    # if num_colors<4:
+    #     thickness = 'LINE2'
+    # else:
+    thickness = 'LINE1'
 
     mem_free_sources = []
     mem_free_format = []
@@ -206,41 +221,47 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
     bytes_in_sources = []
     bytes_in_format = []
 
+
     counter = index
+    counter = 0
     for data in graph_list:
         
-        # print data[6]
-        if data[4] == 'mem_free.rrd':
-            mem_free_sources.append(r'DEF:mem_free{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            mem_free_format.append('{L}:mem_free{i}{color}:{n}'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'cpu_user.rrd':
-            cpu_used_sources.append('DEF:cpu_user{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            cpu_used_format.append('{L}:cpu_user{i}{color}:{n}'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'gpu0_util.rrd':
-            gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            gpu_used_format.append('{L}:gpu0_util{i}{color}:{n}'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'gpu0_mem_util.rrd':
-            gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            gpu_mem_used_format.append('{L}:gpu0_mem_util{i}{color}:{n}'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'bytes_in.rrd':
-            bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            bytes_in_format.append('{L}:bytes_in{i}{color}:{n}'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'bytes_out.rrd':
-            bytes_out_sources.append('DEF:bytes_out{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            bytes_out_format.append('{L}:bytes_out{i}{color}:{n}'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-            counter += 1
+        if data[1] in missing_set:
+            # print "passed ", data[1]
+            pass
+        else:
+            # print "graphedddd ", data[1], data[4]
+            if data[4] == 'mem_free.rrd':
+                mem_free_sources.append('DEF:mem_free{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                mem_free_format.append('{L}:mem_free{i}{color}:{n}'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'cpu_user.rrd':
+                cpu_used_sources.append('DEF:cpu_user{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                cpu_used_format.append('{L}:cpu_user{i}{color}:{n}'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'gpu0_util.rrd':
+                gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                gpu_used_format.append('{L}:gpu0_util{i}{color}:{n}'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'gpu0_mem_util.rrd':
+                gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                gpu_mem_used_format.append('{L}:gpu0_mem_util{i}{color}:{n}'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'bytes_in.rrd':
+                bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                bytes_in_format.append('{L}:bytes_in{i}{color}:{n}'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'bytes_out.rrd':
+                bytes_out_sources.append('DEF:bytes_out{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                bytes_out_format.append('{L}:bytes_out{i}{color}:{n}'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
     mem_free_header = graph_header(start,stop,jobid,cluster,'all',
@@ -261,7 +282,8 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
     bytes_out_header = graph_header(start,stop,jobid,cluster,'all',
                                   'bytes_out',index,gpu_param)
     bytes_out_graph = bytes_out_header + bytes_out_sources + bytes_out_format
-    #print mem_free_graph
+    # print mem_free_graph
+
     try:
         rrdtool.graph(mem_free_graph)
         rrdtool.graph(cpu_used_graph)
@@ -271,7 +293,10 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
             rrdtool.graph(gpu_used_graph)
             rrdtool.graph(gpu_mem_used_graph)
     except rrdtool.error:
+        # print "rrdtool.error in graphit "
         pass
+    #print cpu_used_graph
+    #print mem_free_graph
 
 def all_average_graph(start, stop, jobid, node_names, cluster, 
                 graph_list, num_colors, gpu_param, missing_set):
@@ -296,52 +321,55 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
 
     counter = 0
     for data in graph_list:
-        # print data[6]
-        if data[4] == 'mem_free.rrd':
-            mem_free_sources.append('DEF:mem_free{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            mem_free_sources.append('VDEF:mem_free_avg{i}=mem_free{i},AVERAGE'.format(i=counter))
-            # mem_free_format.append('{L}:mem_free{i}{color}:{n}'.format(
-            #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-            mem_free_format.append('{L}:mem_free_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'cpu_user.rrd':
-            cpu_used_sources.append('DEF:cpu_user{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            cpu_used_sources.append('VDEF:cpu_user_avg{i}=cpu_user{i},AVERAGE'.format(i=counter))
-            # cpu_used_format.append('{L}:cpu_user{i}{color}:{n}'.format(
-            #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-            cpu_used_format.append('{L}:cpu_user_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'gpu0_util.rrd':
-            gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            gpu_used_sources.append('VDEF:gpu_used_avg{i}=gpu0_util{i},AVERAGE'.format(i=counter))
-            gpu_used_format.append('{L}:gpu_used_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'gpu0_mem_util.rrd':
-            gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            gpu_mem_used_sources.append('VDEF:gpu_mem_used_avg{i}=gpu0_mem_util{i},AVERAGE'.format(i=counter))
-            gpu_mem_used_format.append('{L}:gpu_mem_used_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'bytes_in.rrd':
-            bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            bytes_in_sources.append('VDEF:bytes_in_avg{i}=bytes_in{i},AVERAGE'.format(i=counter))
-            # bytes_in_format.append('{L}:bytes_in{i}{color}:{n}'.format(
-            #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-            bytes_in_format.append('{L}:bytes_in_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-        elif data[4] == 'bytes_out.rrd':
-            bytes_out_sources.append('DEF:bytes_out{i}={p}:sum:AVERAGE'.format(
-                  i=counter, p=data[0]))
-            bytes_out_sources.append('VDEF:bytes_out_avg{i}=bytes_out{i},AVERAGE'.format(i=counter))
-            # bytes_out_format.append('{L}:bytes_out{i}{color}:{n}'.format(
-            #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-            bytes_out_format.append('{L}:bytes_out_avg{i}{color}:{n}AVG'.format(
-                  L=thickness, i=counter, color=color_list[counter], n=data[1]))
-            counter += 1
+        if data[1] in missing_set:
+            pass
+        else:
+            # print data[6]
+            if data[4] == 'mem_free.rrd':
+                mem_free_sources.append('DEF:mem_free{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                mem_free_sources.append('VDEF:mem_free_avg{i}=mem_free{i},AVERAGE'.format(i=counter))
+                # mem_free_format.append('{L}:mem_free{i}{color}:{n}'.format(
+                #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                mem_free_format.append('{L}:mem_free_avg{i}{color}:{n}AVG'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'cpu_user.rrd':
+                cpu_used_sources.append('DEF:cpu_user{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                cpu_used_sources.append('VDEF:cpu_user_avg{i}=cpu_user{i},AVERAGE'.format(i=counter))
+                # cpu_used_format.append('{L}:cpu_user{i}{color}:{n}'.format(
+                #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                cpu_used_format.append('{L}:cpu_user_avg{i}{color}:{n}AVG'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'gpu0_util.rrd':
+                gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                gpu_used_sources.append('VDEF:gpu_used_avg{i}=gpu0_util{i},AVERAGE'.format(i=counter))
+                gpu_used_format.append('{L}:gpu_used_avg{i}{color}:{n}AVG'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'gpu0_mem_util.rrd':
+                gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                gpu_mem_used_sources.append('VDEF:gpu_mem_used_avg{i}=gpu0_mem_util{i},AVERAGE'.format(i=counter))
+                gpu_mem_used_format.append('{L}:gpu_mem_used_avg{i}{color}:{n}AVG'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'bytes_in.rrd':
+                bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                bytes_in_sources.append('VDEF:bytes_in_avg{i}=bytes_in{i},AVERAGE'.format(i=counter))
+                # bytes_in_format.append('{L}:bytes_in{i}{color}:{n}'.format(
+                #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                bytes_in_format.append('{L}:bytes_in_avg{i}{color}:{n}AVG'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+            elif data[4] == 'bytes_out.rrd':
+                bytes_out_sources.append('DEF:bytes_out{i}={p}:sum:AVERAGE'.format(
+                      i=counter, p=data[0]))
+                bytes_out_sources.append('VDEF:bytes_out_avg{i}=bytes_out{i},AVERAGE'.format(i=counter))
+                # bytes_out_format.append('{L}:bytes_out{i}{color}:{n}'.format(
+                #       L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                bytes_out_format.append('{L}:bytes_out_avg{i}{color}:{n}AVG'.format(
+                      L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
     mem_free_header = graph_header(start,stop,jobid,cluster,'avg',

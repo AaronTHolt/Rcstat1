@@ -86,7 +86,7 @@ def redirect_to_graphs2(graph_type):
 
     # Generate graphs, if gpu job returns true
     try:
-        gpu_param = process(jobid)
+        gpu_param, missing_set = process(jobid)
         session['gpu_param'] = gpu_param
     except IOError:
         error = 'No matching Job ID found'
