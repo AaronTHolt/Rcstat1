@@ -1,5 +1,6 @@
 import re
 import os
+from sets import Set
 import subprocess
 import rrdtool
 import argparse
@@ -22,6 +23,7 @@ def process(jobid):
 
     start, stop, cluster_names, node_names = get_data(jobid, debug)
     # print cluster_names, node_names
+    print start, stop
 
     #make directory for jobid
     try:
@@ -55,7 +57,7 @@ def process(jobid):
                 for graph in desired_graphs:
                     # path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                     #                       c=cluster, n=node, g=graph)
-                    path = '/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                    path = r'/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                                           c=rackname, n=node, g=graph)
                     graph_list.append([path, node, rackname, jobid, graph])
         else:
@@ -63,16 +65,21 @@ def process(jobid):
                 for graph in desired_graphs:
                     # path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                     #                       c=cluster, n=node, g=graph)
-                    path = '/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                    path = r'/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                                           c=cluster, n=node, g=graph)
                     graph_list.append([path, node, cluster, jobid, graph])
-
+    
+    missing_set = Set()
     for data in graph_list:
-        single_node_graphs(start, stop, data, gpu_param)
-    # print graph_list
+        try:    
+            single_node_graphs(start, stop, data, gpu_param)
+        except rrdtool.error:
+            missing_set.add(data[1])
+    print missing_set    
+# print graph_list
 
     all_node_graph(start, stop, jobid, node_names, cluster, 
-                    graph_list, gpu_param)
+                    graph_list, gpu_param, missing_set)
 
     return gpu_param
 
@@ -138,7 +145,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
 
 
 def all_node_graph(start, stop, jobid, node_names, cluster, 
-                  graph_list, gpu_param):
+                  graph_list, gpu_param, missing_set):
 
     # Count how many lines are on a graph
     # Split list into lists of Max_Lines
@@ -157,26 +164,26 @@ def all_node_graph(start, stop, jobid, node_names, cluster,
     # and keep max 10 plots on a graph
     if num_colors > Max_Lines:
         all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors, gpu_param)
+                graph_list, num_colors, gpu_param, missing_set)
         for index in graph_dict:
             graphit(start, stop, jobid, node_names, cluster,
                     graph_dict[index], index, num_colors, 
-                    Max_Lines, gpu_param)
+                    Max_Lines, gpu_param, missing_set)
 
     else:
         ## REMOVE THIS WHEN YOU FIND JOBS>10 NODES TO TEST ON
         ##
         all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors, gpu_param)
+                graph_list, num_colors, gpu_param, missing_set)
         ##
         graphit(start, stop, jobid, node_names, cluster,
                 graph_dict[index], index, num_colors, 
-                Max_Lines, gpu_param)
+                Max_Lines, gpu_param, missing_set)
 
 
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 
-              index, num_colors, Max_Lines, gpu_param):
+              index, num_colors, Max_Lines, gpu_param, missing_set):
     color_list = get_colors(num_colors)
     # print color_list
     num_colors = num_colors - index*Max_Lines
@@ -201,9 +208,10 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
 
     counter = index
     for data in graph_list:
+        
         # print data[6]
         if data[4] == 'mem_free.rrd':
-            mem_free_sources.append('DEF:mem_free{i}={p}:sum:AVERAGE'.format(
+            mem_free_sources.append(r'DEF:mem_free{i}={p}:sum:AVERAGE'.format(
                   i=counter, p=data[0]))
             mem_free_format.append('{L}:mem_free{i}{color}:{n}'.format(
                   L=thickness, i=counter, color=color_list[counter], n=data[1]))
@@ -253,16 +261,20 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
     bytes_out_header = graph_header(start,stop,jobid,cluster,'all',
                                   'bytes_out',index,gpu_param)
     bytes_out_graph = bytes_out_header + bytes_out_sources + bytes_out_format
-    rrdtool.graph(mem_free_graph)
-    rrdtool.graph(cpu_used_graph)
-    rrdtool.graph(bytes_out_graph)
-    rrdtool.graph(bytes_in_graph)
-    if gpu_param:
-        rrdtool.graph(gpu_used_graph)
-        rrdtool.graph(gpu_mem_used_graph)
+    #print mem_free_graph
+    try:
+        rrdtool.graph(mem_free_graph)
+        rrdtool.graph(cpu_used_graph)
+        rrdtool.graph(bytes_out_graph)
+        rrdtool.graph(bytes_in_graph)
+        if gpu_param:
+            rrdtool.graph(gpu_used_graph)
+            rrdtool.graph(gpu_mem_used_graph)
+    except rrdtool.error:
+        pass
 
 def all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors, gpu_param):
+                graph_list, num_colors, gpu_param, missing_set):
     color_list = get_colors(num_colors)
     thickness = 'LINE1'
 
@@ -351,15 +363,18 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
                                   'bytes_out',0,gpu_param)
     bytes_out_graph = bytes_out_header + bytes_out_sources + bytes_out_format
     # print mem_free_graph
-    rrdtool.graph(mem_free_graph)
-    rrdtool.graph(cpu_used_graph)
-    rrdtool.graph(bytes_out_graph)
-    rrdtool.graph(bytes_in_graph)
-    if gpu_param:
-        rrdtool.graph(gpu_used_graph)
-        print "HI!", gpu_mem_used_sources
-        print gpu_mem_used_graph
-        rrdtool.graph(gpu_mem_used_graph)
+    try:
+        rrdtool.graph(mem_free_graph)
+        rrdtool.graph(cpu_used_graph)
+        rrdtool.graph(bytes_out_graph)
+        rrdtool.graph(bytes_in_graph)
+        if gpu_param:
+            rrdtool.graph(gpu_used_graph)
+            #print "HI!", gpu_mem_used_sources
+            #print gpu_mem_used_graph
+            rrdtool.graph(gpu_mem_used_graph)
+    except rrdtool.error:
+        pass
 
 
 def single_node_graphs(start, stop, data, gpu_param):

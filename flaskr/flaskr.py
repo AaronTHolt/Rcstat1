@@ -94,12 +94,13 @@ def redirect_to_graphs2(graph_type):
 
     images = get_images(jobid, graph_type, 'all')
     session['jobid'] = jobid
-
+    
+    total_image_number = get_images(jobid, graph_type, 'cpu')
     # images = sorted(images)
     ## TODO: raise exception that a job wasn't found...
     # Input that wasn't a job
-    if len(images)<2:
-        error = 'No matching Job ID found'
+    if len(total_image_number)<0:
+        error = 'No matching Job ID found {i}'.format(i=len(total_image_number))
         return render_template('show_entries.html', error=error)
     return render_template('all_graph.html', images=images, 
                             jobid=jobid, error=error, gpu_param=gpu_param)
