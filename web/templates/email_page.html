@@ -1,0 +1,31 @@
+<style>
+.form1 {
+    float: left;
+    padding-right:5px;
+}
+</style>
+
+{% extends "layout.html" %}
+{% block body %}
+  {% if session.logged_in %}
+    <form class=form1 action="{{ url_for('redirect_to_main') }}" method=post class=redirect-to-main>
+        <input type=submit value='Main Page'>
+    </form>
+    <form class=form1 action="{{ url_for('redirect_to_graphs2') }}" method=post class=redirect-to-graphs2>
+        <input type=submit value='Graph Page'>
+    </form>
+    <div>
+        <dt>&nbsp;
+        <dt>&nbsp;
+    </div>
+    <form action="{{ url_for('send_an_email') }}" method=post class=send-an-email>
+      <dl>
+        <dt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Email Address:
+        <dd><textarea name=text rows=1 cols=50></textarea>
+        <dd><input type=submit value=Email></dd>  
+        <dt>&nbsp;
+        <dt>&nbsp;
+      <dl>
+    </form>
+  {% endif %}
+{% endblock %}

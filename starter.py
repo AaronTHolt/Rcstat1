@@ -1,4 +1,4 @@
 #application start
 
-from flaskr import flaskr
-flaskr.app.run()
+from web import flask_main
+flask_main.app.run()

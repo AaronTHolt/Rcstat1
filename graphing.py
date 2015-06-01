@@ -24,13 +24,13 @@ def process(jobid):
 
     #make directory for jobid
     try:
-        os.mkdir('flaskr/static/plots')
-        os.chmod('flaskr/static/plots',0o777)
+        os.mkdir('web/static/plots')
+        os.chmod('web/static/plots',0o777)
     except OSError:
         pass
     try:
-        os.mkdir('flaskr/static/plots/{j}'.format(j=jobid))
-        os.chmod('flaskr/static/plots/{j}'.format(j=jobid),0o777)
+        os.mkdir('web/static/plots/{j}'.format(j=jobid))
+        os.chmod('web/static/plots/{j}'.format(j=jobid),0o777)
     except OSError:
         pass
 
@@ -69,12 +69,17 @@ def process(jobid):
     # for data in graph_list:
     #     print data[1]
 
+    available_set = Set()
     missing_set = Set()
     for data in graph_list:
         try:    
             single_node_graphs(start, stop, data, gpu_param)
+            available_set.add(data[1])
+            print "AVAIL", data[1], data[4]
         except rrdtool.error:
             missing_set.add(data[1])
+            # print "BAD", data[1], data[4]
+    # print "Available =", len(available_set), available_set
     print "Missing =", len(missing_set), missing_set
     # print "Nodes Used =", len(Set(node_names)-missing_set), Set(node_names)-missing_set    
 
@@ -91,7 +96,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
     # avg is averages plotted
     # all is all lines on one plot
 
-    header = ['flaskr/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
+    header = ['web/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
                   r=rrd_type, g=graph_type, i=index),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
@@ -158,9 +163,12 @@ def all_node_graph(start, stop, jobid, node_names, cluster,
     graph_dict = defaultdict(list)
     num_colors = 0
     for data in graph_list:
+        # print data[4]
         if data[1] in missing_set:
+            # print data[1]
             pass
         else:
+            # print data[1]
             graph_dict[index].append(data)
             if data[4] == 'bytes_out.rrd':
                 num_colors += 1
@@ -172,34 +180,42 @@ def all_node_graph(start, stop, jobid, node_names, cluster,
     # print "INDEX ", index
     # if more than 10 nodes used, generate average plot
     # and keep max 10 plots on a graph
-    if num_colors > Max_Lines:
-        all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors, gpu_param, missing_set)
-        for index in graph_dict:
-            # print "WENT HERE", index
+    if num_colors == 0:
+        pass
+    else:
+        if num_colors >= Max_Lines:
+            all_average_graph(start, stop, jobid, node_names, cluster, 
+                    graph_list, num_colors, gpu_param, missing_set)
+            for index in graph_dict:
+                # print "WENT HERE", index
+                graphit(start, stop, jobid, node_names, cluster,
+                        graph_dict[index], index, num_colors, 
+                        Max_Lines, gpu_param, missing_set)
+
+        else:
+            ## REMOVE THIS WHEN YOU FIND JOBS>10 NODES TO TEST ON
+            ##
+            all_average_graph(start, stop, jobid, node_names, cluster, 
+                    graph_list, num_colors, gpu_param, missing_set)
+            ##
             graphit(start, stop, jobid, node_names, cluster,
                     graph_dict[index], index, num_colors, 
                     Max_Lines, gpu_param, missing_set)
-
-    else:
-        ## REMOVE THIS WHEN YOU FIND JOBS>10 NODES TO TEST ON
-        ##
-        all_average_graph(start, stop, jobid, node_names, cluster, 
-                graph_list, num_colors, gpu_param, missing_set)
-        ##
-        graphit(start, stop, jobid, node_names, cluster,
-                graph_dict[index], index, num_colors, 
-                Max_Lines, gpu_param, missing_set)
 
 
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 
               index, num_colors, Max_Lines, gpu_param, missing_set):
     # print "IN GRAPHIT"
-    if num_colors - index*Max_Lines > Max_Lines:
+    # print "num_colors", num_colors
+    # print "index", index
+    if num_colors == Max_Lines:
+        pass
+    elif num_colors - index*Max_Lines >= Max_Lines:
         num_colors = Max_Lines
     else:
         num_colors = num_colors - index*Max_Lines
+    # print "num_colors", num_colors
     color_list = get_colors(num_colors)
 
 
@@ -412,7 +428,7 @@ def single_node_graphs(start, stop, data, gpu_param):
         nodename ='node' + nodename
 
     if graph_type == 'mem_free.rrd':
-        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
+        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Amount Free',
@@ -421,7 +437,7 @@ def single_node_graphs(start, stop, data, gpu_param):
               'LINE2:mem_free#0000FF')
 
     elif graph_type == 'cpu_user.rrd':
-        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
+        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Percent (%)',
@@ -432,7 +448,7 @@ def single_node_graphs(start, stop, data, gpu_param):
 
     ## General network statistics
     elif graph_type == 'bytes_in.rrd':
-        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
+        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
@@ -441,7 +457,7 @@ def single_node_graphs(start, stop, data, gpu_param):
               'LINE2:bytes_in#0000FF')
 
     elif graph_type == 'bytes_out.rrd':
-        rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
+        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
@@ -451,7 +467,7 @@ def single_node_graphs(start, stop, data, gpu_param):
 
     if gpu_param:
         if graph_type == 'gpu0_util.rrd':
-            rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
+            rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
                   '--vertical-label', 'Percent (%)',
@@ -459,7 +475,7 @@ def single_node_graphs(start, stop, data, gpu_param):
                   'DEF:gpu0_util={p}:sum:AVERAGE'.format(p=path),
                   'LINE2:gpu0_util#0000FF')
         if graph_type == 'gpu0_mem_util.rrd':
-            rrdtool.graph('flaskr/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
+            rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
                   '--vertical-label', 'Percent (%)',

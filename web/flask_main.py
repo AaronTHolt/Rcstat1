@@ -10,9 +10,10 @@ import StringIO
 from graphing import *
 from emailrrd import send_email
 
+
 # configuration
 DEBUG = True
-SECRET_KEY = 'development key'
+SECRET_KEY = 'super secret development key'
 USERNAME = 'admin'
 PASSWORD = 'default'
 
@@ -29,20 +30,19 @@ app.config.from_object(__name__)
 def show_entries():
     return render_template('show_entries.html')
 
-## Button that goes to the graphs
-@app.route('/graph_button', methods=['POST'])
-def redirect_to_graphs():
+## To email graphs
+@app.route('/email', methods=['POST'])
+def redirect_to_email():
     if not session.get('logged_in'):
         abort(401)
-    return render_template('graph_page.html')
-    # return app.send_static_file('speed4.png')
+    return render_template('email_page.html')
 
 ## Submit jobid button
 @app.route('/graph_summary', methods=['POST'])
 def redirect_to_summary_graphs():
     if not session.get('logged_in'):
         abort(401)
-    return redirect_to_graphs2('all')
+    return redirect_to_graphs('all')
 
 ## CPU button
 @app.route('/graph_select', methods=['POST'])
@@ -67,12 +67,13 @@ def graph_selection():
 
 ## After submit button or buttons on all_graph
 # @app.route('/graph_button2', methods=['POST'])
-def redirect_to_graphs2(graph_type):
+def redirect_to_graphs(graph_type):
     if not session.get('logged_in'):
         abort(401)
 
     error = None
     jobid = request.form['text']
+    session['jobid'] = jobid
 
     # Empty input
     if jobid == '':
@@ -83,7 +84,6 @@ def redirect_to_graphs2(graph_type):
     ## no input, letters input, html input
     #jobid = sanitize(jobid)
 
-
     # Generate graphs, if gpu job returns true
     try:
         gpu_param, missing_set = process(jobid)
@@ -93,33 +93,44 @@ def redirect_to_graphs2(graph_type):
         return render_template('show_entries.html', error=error)
 
     images = get_images(jobid, graph_type, 'all')
-    session['jobid'] = jobid
-    
-    total_image_number = get_images(jobid, graph_type, 'cpu')
+    session['images'] = images
+        
+    total_image_number = get_num_images(jobid)
+    print "TOTAL IMAGE NUMBER", total_image_number
     # images = sorted(images)
     ## TODO: raise exception that a job wasn't found...
     # Input that wasn't a job
-    if len(total_image_number)<0:
-        error = 'No matching Job ID found {i}'.format(i=len(total_image_number))
+    if total_image_number<=0:
+        error = 'No matching Job ID or no data'
         return render_template('show_entries.html', error=error)
     return render_template('all_graph.html', images=images, 
                             jobid=jobid, error=error, gpu_param=gpu_param)
 
-## Button back to blog page
-@app.route('/blog', methods=['POST'])
-def redirect_to_blog():
+#Email page back to graph page
+@app.route('/graphs2', methods=['POST'])
+def redirect_to_graphs2():
+    if not session.get('logged_in'):
+        abort(401)
+    return render_template('all_graph.html', images=session['images'], 
+                            jobid=session['jobid'], error=None, 
+                            gpu_param=session['gpu_param'])
+
+## Button back to main page
+@app.route('/main', methods=['POST'])
+def redirect_to_main():
     if not session.get('logged_in'):
         abort(401)
     return redirect(url_for('show_entries'))
 
 ## Emailbutton onclick
-@app.route('/email', methods=['POST'])
+@app.route('/email_it', methods=['POST'])
 def send_an_email():
     if not session.get('logged_in'):
         abort(401)
     addr = request.form['text']
-    send_email(addr)
-    return render_template('graph_page.html')
+    # print "ADDRESS SENT TO", addr
+    send_email(addr, session['jobid'])
+    return render_template('email_page.html')
 
 ## Login page
 @app.route('/login', methods=['GET', 'POST'])
@@ -143,17 +154,23 @@ def logout():
     flash('You were logged out')
     return redirect(url_for('show_entries'))
 
+def get_num_images(jobid):
+    images = []
+    for root, dirs, files in os.walk('web/static/'):
+        for filename in [os.path.join(root, name) for name in files]:
+            if not '/'+str(jobid)+'/' in filename:
+                continue
+            if not filename.endswith('.png'):
+                continue
+            images.append(filename)
+    return len(images)
+
 def get_images(jobid, graph_type, category):
     images = []
     WIDTH = 1000
     HEIGHT = 800
-    for root, dirs, files in os.walk('flaskr/static/'):
-    # for root, dirs, files in os.walk('.'):
-        # print root, dirs, files
+    for root, dirs, files in os.walk('web/static/'):
         for filename in [os.path.join(root, name) for name in files]:
-            # print filename, jobid, graph_type, category
-            # if not '519035' in filename:
-            #     continue
             if not '/'+str(jobid)+'/' in filename:
                 continue
             if not category in filename:
@@ -201,4 +218,4 @@ def dated_url_for(endpoint, **values):
 
 if __name__ == '__main__':
     # app.run()
-    app.run(host='0.0.0.0', debug = False)
+    app.run(host='0.0.0.0')

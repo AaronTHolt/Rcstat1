@@ -32,7 +32,7 @@ def convert_cluster_names(cluster_list):
 
     return cluster_names
 
-# Expands node lists such as 'node[0000-0010],node0015'
+# Expands node lists such as 'node[0001-0010,0015]'
 # into individual nodes
 def expand_node_list(node_list):
     nodes = []
