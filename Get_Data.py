@@ -8,9 +8,10 @@ def get_data(jobid, debug):
     cmd = 'sacct -P -j {j} -o Start,End,Nodelist,Partition,JobId > sacct_output/{j}.txt'.format(j=jobid)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = p.communicate()
-    #print "COMMAND = ", cmd
-    #print out
-    #print err
+
+    file_length = sum(1 for line in open('sacct_output/{j}.txt'.format(j=jobid)))
+    if file_length == 1:
+        return False, False, False, False
 
     with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
         data = f.read()

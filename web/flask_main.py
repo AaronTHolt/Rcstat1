@@ -8,6 +8,7 @@ from PIL import Image
 import StringIO
 
 from graphing import *
+from Utility import convert_seconds_to_enddate
 from emailrrd import send_email
 
 
@@ -62,7 +63,8 @@ def graph_selection():
     images = get_images(jobid, graph_type, category)
     error = None
     return render_template('all_graph.html', images=images, jobid=jobid,
-                             error=error, gpu_param=session['gpu_param'])
+                             error=error, gpu_param=session['gpu_param'],
+                            start=session['start'], end=session['end'])
 
 
 ## After submit button or buttons on all_graph
@@ -75,18 +77,16 @@ def redirect_to_graphs(graph_type):
     jobid = request.form['text']
     session['jobid'] = jobid
 
-    # Empty input
-    if jobid == '':
-        error = 'Please enter a Job ID'
+    # Handle: empty, non-numeric, negative, 9digit+
+    if not jobid.isdigit() or if len(jobid)>=9:
+        error = 'Please enter a valid Job ID'
         return render_template('show_entries.html', error=error)
 
-    ## TODO: sanitize input
-    ## no input, letters input, html input
-    #jobid = sanitize(jobid)
-
-    # Generate graphs, if gpu job returns true
+    # Generate graphs, check if gpu job
     try:
-        gpu_param, missing_set = process(jobid)
+        gpu_param, missing_set, start, end = process(jobid)
+        session['start'] = convert_seconds_to_enddate(start)
+        session['end'] = convert_seconds_to_enddate(end)
         session['gpu_param'] = gpu_param
     except IOError:
         error = 'No matching Job ID found'
@@ -96,7 +96,7 @@ def redirect_to_graphs(graph_type):
     session['images'] = images
         
     total_image_number = get_num_images(jobid)
-    print "TOTAL IMAGE NUMBER", total_image_number
+    # print "TOTAL IMAGE NUMBER", total_image_number
     # images = sorted(images)
     ## TODO: raise exception that a job wasn't found...
     # Input that wasn't a job
@@ -104,7 +104,8 @@ def redirect_to_graphs(graph_type):
         error = 'No matching Job ID or no data'
         return render_template('show_entries.html', error=error)
     return render_template('all_graph.html', images=images, 
-                            jobid=jobid, error=error, gpu_param=gpu_param)
+                            jobid=jobid, error=error, gpu_param=gpu_param,
+                            start=session['start'], end=session['end'])
 
 #Email page back to graph page
 @app.route('/graphs2', methods=['POST'])
@@ -113,7 +114,8 @@ def redirect_to_graphs2():
         abort(401)
     return render_template('all_graph.html', images=session['images'], 
                             jobid=session['jobid'], error=None, 
-                            gpu_param=session['gpu_param'])
+                            gpu_param=session['gpu_param'],
+                            start=session['start'], end=session['end'])
 
 ## Button back to main page
 @app.route('/main', methods=['POST'])
@@ -127,10 +129,13 @@ def redirect_to_main():
 def send_an_email():
     if not session.get('logged_in'):
         abort(401)
+    error=None
     addr = request.form['text']
     # print "ADDRESS SENT TO", addr
-    send_email(addr, session['jobid'])
-    return render_template('email_page.html')
+    sent = send_email(addr, session['jobid'])
+    if sent == False:
+        error = 'Unable to send email'
+    return render_template('email_page.html', error=error)
 
 ## Login page
 @app.route('/login', methods=['GET', 'POST'])

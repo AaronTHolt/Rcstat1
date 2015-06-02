@@ -52,7 +52,13 @@ def send_email(toaddress, jobid):
         img = MIMEImage(fp.read())
         fp.close()
         msgRoot.attach(img)
+    try:
+        server.sendmail(fromaddr, toaddr, msgRoot.as_string())
+        server.quit()
+        return True
+    except smtplib.SMTPRecipientsRefused:
+        server.quit()
+        return False
 
-    server.sendmail(fromaddr, toaddr, msgRoot.as_string())
-    server.quit()
+    
 

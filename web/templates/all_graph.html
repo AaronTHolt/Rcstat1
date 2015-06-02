@@ -5,9 +5,9 @@
     <title></title>
     <meta charset="utf-8" />
     <style>
-a, h1, h2       { color: #377ba8; }
-h1, h2          { font-family: 'Georgia', serif; margin: 0; }
-h1              { border-bottom: 2px solid #eee; }
+a, h1, h2, h3       { color: #377ba8; }
+h1, h2, h3          { font-family: 'Georgia', serif; margin: 0; }
+/*h1              { border-bottom: 2px solid #eee; }*/
 h2              { font-size: 1.2em; }
 body {
     margin: 0;
@@ -31,6 +31,22 @@ img {
     float: left;
     padding-right:5px;
 }
+.header3 {
+    /*float: right;*/
+    text-align: right;
+}
+
+.borderless td, .borderless th {
+    border: none;
+    margin: 0px;
+}
+
+hr {
+    height: 4px;
+    background-color: #EEEEEE
+}
+
+
     </style>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js" charset="utf-8"></script>
     <script src="http://luis-almeida.github.io/unveil/jquery.unveil.min.js" charset="utf-8"></script>
@@ -44,11 +60,21 @@ $(document).ready(function() {
 <body>
     {% if session.logged_in %}
         {% block body %}
-<!--             <a class="jobid" href="{{ jobid.src }}">
-                <h1>{{ jobid }}</h1>
-            </a> -->
-            <h1>Jobid {{ jobid }}</h1>
+            <!-- <h1>Jobid {{ jobid }}</h1>
+            <h3 class=header3>Start: {{ start }}&nbsp;</h3>
+            <h3 class=header3>End:&nbsp;&nbsp;   {{ end }}&nbsp;</h3> -->
 
+            <table class='table borderless', width="100%">
+                <tr>
+                    <td rowspan="2"><h1>Jobid {{ jobid }}</h1></td>
+                    <td><h3 class=header3>Start: {{ start }}&nbsp;</h3></td>
+                </tr>
+                <tr>
+                    <td><h3 class=header3>End:&nbsp;&nbsp;   {{ end }}&nbsp;</h3></td>
+                </tr>
+            </table>
+
+            <hr>
 
             <form class=form1 action="{{ url_for('redirect_to_main') }}" method=post class=redirect-to-main>
                 <input type=submit value='Main Page'>
@@ -75,12 +101,6 @@ $(document).ready(function() {
                 <button type=submit name='action' value='gpu0_mem_util'>GPU Memory</button>
                 {% endif %}
               </div>
-<!--               <dd><input type=submit name='action' value='all'>
-              <dd><input type=submit name='action' value='avg'>
-              <dd><input type=submit name='action' value='cpu'>
-              <dd><input type=submit name='action' value='mem_free'>
-              <dd><input type=submit name='action' value='bytes_in'>
-              <dd><input type=submit name='action' value='bytes_out'> -->
             </form>
         {% endblock %}
         {% for image in images %}

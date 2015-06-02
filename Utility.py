@@ -2,10 +2,15 @@
 
 import time
 from calendar import timegm
+import datetime
 from datetime import datetime
 import hostlist
 import numpy as np
 import colorsys
+
+def convert_seconds_to_enddate(seconds):
+    return datetime.fromtimestamp(int(seconds)).strftime(
+                                                '%Y-%m-%d %H:%M:%S')
 
 def convert_enddate_to_seconds(ts):
     # Takes ISO 8601 format(string) and converts into epoch time.

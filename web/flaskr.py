@@ -8,6 +8,7 @@ from PIL import Image
 import StringIO
 
 from graphing import *
+from Utility import convert_seconds_to_enddate
 from emailrrd import send_email
 
 
@@ -86,7 +87,9 @@ def redirect_to_graphs(graph_type):
 
     # Generate graphs, if gpu job returns true
     try:
-        gpu_param, missing_set = process(jobid)
+        gpu_param, missing_set, start, end = process(jobid)
+        session['start'] = convert_seconds_to_enddate(start)
+        session['end'] = convert_seconds_to_enddate(end)
         session['gpu_param'] = gpu_param
     except IOError:
         error = 'No matching Job ID found'
@@ -112,7 +115,9 @@ def redirect_to_graphs2():
         abort(401)
     return render_template('all_graph.html', images=session['images'], 
                             jobid=session['jobid'], error=None, 
-                            gpu_param=session['gpu_param'])
+                            gpu_param=session['gpu_param'],
+                            start=session['start'],
+                            end=session['end'])
 
 ## Button back to main page
 @app.route('/main', methods=['POST'])
