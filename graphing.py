@@ -20,6 +20,10 @@ def process(jobid):
     # Get job information from slurm
     start, stop, cluster_names, node_names = get_data(jobid, debug)
 
+    #For jobs with no start time
+    if start=='Unknown':
+        return 'Unknown', 'Unknown', 'Unknown', 'Unknown'
+
     #For job numbers that are too large
     if start==False or stop==False:
         return False, False, False, False

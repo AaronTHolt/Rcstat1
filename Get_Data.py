@@ -31,11 +31,15 @@ def get_data(jobid, debug):
         t1 = '2015-05-25T10:00:00'
         t2 = '2015-05-29T12:44:02'
 
-    start = convert_enddate_to_seconds(t1)
-    try:
-        stop = convert_enddate_to_seconds(t2)
-    except ValueError:
-        stop = 'now'
+    if t1 == 'Unknown':
+        start = t1
+        stop = t1
+    else:
+        start = convert_enddate_to_seconds(t1)
+        try:
+            stop = convert_enddate_to_seconds(t2)
+        except ValueError:
+            stop = 'now'
     # print start, stop
 
     return start, stop, cluster_names, node_names

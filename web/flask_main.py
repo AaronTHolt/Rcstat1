@@ -78,13 +78,16 @@ def redirect_to_graphs(graph_type):
     session['jobid'] = jobid
 
     # Handle: empty, non-numeric, negative, 9digit+
-    if not jobid.isdigit() or if len(jobid)>=9:
+    if not jobid.isdigit() or len(jobid)>=9:
         error = 'Please enter a valid Job ID'
         return render_template('show_entries.html', error=error)
 
     # Generate graphs, check if gpu job
     try:
         gpu_param, missing_set, start, end = process(jobid)
+        if start == 'Unknown':
+            error = 'No start time listed'
+            return render_template('show_entries.html', error=error)
         session['start'] = convert_seconds_to_enddate(start)
         session['end'] = convert_seconds_to_enddate(end)
         session['gpu_param'] = gpu_param
@@ -202,7 +205,7 @@ def get_images(jobid, graph_type, category):
             })
     images = sorted(images)
     if graph_type == 'all' or graph_type == 'avg':
-        images = sorted(images, reverse=True)
+        images = sorted(images, key=lambda k: k['src'], reverse=True)
     return images
 
 ## Next 2 sections make it so any time url_for is used
