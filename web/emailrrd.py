@@ -37,7 +37,7 @@ def send_email(toaddress, jobid):
     msgAlternative.attach(msgText)
 
     image_paths = []
-    for root, dirs, files in os.walk('flaskr/static/'):
+    for root, dirs, files in os.walk('web/static/'):
         for filename in [os.path.join(root, name) for name in files]:
             if not '/'+str(jobid)+'/' in filename:
                 continue

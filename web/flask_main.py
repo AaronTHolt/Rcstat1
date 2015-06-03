@@ -132,7 +132,7 @@ def redirect_to_main():
 def send_an_email():
     if not session.get('logged_in'):
         abort(401)
-    error=None
+    error = None
     addr = request.form['text']
     # print "ADDRESS SENT TO", addr
     sent = send_email(addr, session['jobid'])
