@@ -58,16 +58,12 @@ def process(jobid):
             for node in node_names:
                 rackname = get_rackname(node)
                 for graph in desired_graphs:
-                    # path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
-                    #                       c=cluster, n=node, g=graph)
                     path = r'/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                                           c=rackname, n=node, g=graph)
                     graph_list.append([path, node, rackname, jobid, graph])
         else:
             for node in node_names:
                 for graph in desired_graphs:
-                    # path = 'rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
-                    #                       c=cluster, n=node, g=graph)
                     path = r'/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                                           c=cluster, n=node, g=graph)
                     graph_list.append([path, node, cluster, jobid, graph])
@@ -95,7 +91,7 @@ def process(jobid):
 def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   index, gpu_param):
     # graph types are currently: avg, all
-    # avg is averages plotted
+    # avg is averages plotted with stats below
     # all is all lines on one plot
 
     header = ['web/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
@@ -187,17 +183,12 @@ def all_node_graph(start, stop, jobid, node_names, cluster,
                 graphit(start, stop, jobid, node_names, cluster,
                         graph_dict[index], index, num_colors, 
                         Max_Lines, gpu_param, missing_set)
-
         else:
-            ## REMOVE THIS WHEN YOU FIND JOBS>10 NODES TO TEST ON
-            ##
             all_average_graph(start, stop, jobid, node_names, cluster, 
                     graph_list, num_colors, gpu_param, missing_set)
-            ##
             graphit(start, stop, jobid, node_names, cluster,
                     graph_dict[index], index, num_colors, 
                     Max_Lines, gpu_param, missing_set)
-
 
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 
@@ -226,8 +217,7 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
     bytes_in_sources = []
     bytes_in_format = []
 
-
-    counter = index
+    # counter = index
     counter = 0
     for data in graph_list:
         
@@ -315,9 +305,6 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
     bytes_in_sources = []
     bytes_in_format = []
 
-      # DEF:ping_host=ping.rrd:ping_ms:AVERAGE 
-      # VDEF:ping_average=ping_host,AVERAGE 
-
     counter = 0
     for data in graph_list:
         if data[1] in missing_set:
@@ -351,14 +338,26 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
                 gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
                 gpu_used_sources.append('VDEF:gpu_used_avg{i}=gpu0_util{i},AVERAGE'.format(i=counter))
+                if counter == 0:
+                    gpu_used_format.append('COMMENT:                MIN        MAX       AVERAGE            ')
                 gpu_used_format.append('{L}:gpu_used_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                gpu_used_format.append('GPRINT:gpu0_util{i}:MIN:%6.1lf %S%%'.format(i=counter))
+                gpu_used_format.append('GPRINT:gpu0_util{i}:MAX:%6.1lf %S%%'.format(i=counter))
+                gpu_used_format.append('GPRINT:gpu0_util{i}:AVERAGE:%6.1lf %S%%\l'.format(i=counter))
+
             elif data[4] == 'gpu0_mem_util.rrd':
                 gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
                 gpu_mem_used_sources.append('VDEF:gpu_mem_used_avg{i}=gpu0_mem_util{i},AVERAGE'.format(i=counter))
+                if counter == 0:
+                    gpu_mem_used_format.append('COMMENT:               MIN       MAX      AVERAGE                ')
                 gpu_mem_used_format.append('{L}:gpu_mem_used_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
+                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:MIN:%6.2lf %S'.format(i=counter))
+                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:MAX:%6.2lf %S'.format(i=counter))
+                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:AVERAGE:%6.2lf %S\l'.format(i=counter))
+
             elif data[4] == 'bytes_in.rrd':
                 bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
@@ -383,7 +382,6 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
                 bytes_out_format.append('GPRINT:bytes_out{i}:MAX:%6.0lf %S'.format(i=counter))
                 bytes_out_format.append('GPRINT:bytes_out{i}:AVERAGE:%6.0lf %S\l'.format(i=counter))
                 counter += 1
-
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
     mem_free_header = graph_header(start,stop,jobid,cluster,'avg',

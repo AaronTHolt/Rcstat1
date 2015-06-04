@@ -7,7 +7,6 @@
 
 {% extends "layout.html" %}
 {% block body %}
-  {% if session.logged_in %}
     <form class=form1 action="{{ url_for('redirect_to_main') }}" method=post class=redirect-to-main>
         <input type=submit value='Main Page'>
     </form>
@@ -28,5 +27,4 @@
       <dl>
     </form>
     {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %} 
-  {% endif %}
 {% endblock %}

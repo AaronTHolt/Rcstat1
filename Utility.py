@@ -44,7 +44,6 @@ def expand_node_list(node_list):
     for node in node_list:
         nodes.append(hostlist.expand_hostlist(node))
     flat_node_list = [item for sublist in nodes for item in sublist]
-    # print flat_node_list
     return flat_node_list
 
 # Flattens a list of lists
@@ -56,20 +55,16 @@ def flat_list(a_list):
 def parse_job_file(data):
     t1 = ''
     t2 = ''
-    # jobid = 0
     node_names = []
     cluster_names = []
     line_number = 0
     for line in data.split('\n'):
         if line_number == 1:
             line_split = line.split('|')
-            # print line.split('|')
             t1 = line_split[0]
             t2 = line_split[1]
             node_names.append(line_split[2])
             cluster_names.append(line_split[3])
-            # jobid = int(float(line_split[4]))
-        # print line
         line_number += 1
 
     return t1, t2, node_names, cluster_names

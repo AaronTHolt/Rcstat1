@@ -1,0 +1,12 @@
+rrdtool degrade times:
+10s  -> 16.26hrs
+40s  -> 9.33days
+400s -> 244days
+
+Common things to look for:
+1. Free memory goes to zero
+2. CPU use at zero for all nodes
+
+Empty Graphs (not graphs with data at zero)? nan Values?
+It's likely Ganglia wasn't taking data at the time. It's very unlikely that the node was down.
+

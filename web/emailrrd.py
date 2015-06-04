@@ -9,13 +9,13 @@ from email.MIMEImage import MIMEImage
 
 def send_email(toaddress, jobid):
     # print "IN SEND EMAIL"
-    # server = smtplib.SMTP('10.128.0.190') ##rcmail.rc.colorado.edu
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server = smtplib.SMTP('10.128.0.190') ##rcmail.rc.colorado.edu
+    # server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo('10.225.160.55') ##rcstat1
-    server.starttls()
-    server.ehlo('10.225.160.55')
+    # server.starttls()
+    # server.ehlo('10.225.160.55')
 
-    server.login("testuser3216", "imadeapassword!!!")
+    # server.login("testuser3216", "imadeapassword!!!")
 
     fromaddr = "NO REPLY"
     # toaddr = "holtat@colorado.edu"

@@ -45,68 +45,67 @@ hr {
     height: 4px;
     background-color: #EEEEEE
 }
-
-
     </style>
-    <script src="https://code.jquery.com/jquery-1.10.2.min.js" charset="utf-8"></script>
-    <script src="http://luis-almeida.github.io/unveil/jquery.unveil.min.js" charset="utf-8"></script>
-    <script>
-$(document).ready(function() {
+
+
+<script type="text/javascript">
+    var jobid = {{ jobid }};
+</script>
+
+<script src="https://code.jquery.com/jquery-1.10.2.min.js" charset="utf-8"></script>
+<script src="http://luis-almeida.github.io/unveil/jquery.unveil.min.js" charset="utf-8"></script>
+<script>
+    $(document).ready(function() {
     $('img').unveil(1000);
-});
-    </script>
+    });
+</script>
+
 
 </head>
 <body>
-    {% if session.logged_in %}
-        {% block body %}
-            <!-- <h1>Jobid {{ jobid }}</h1>
-            <h3 class=header3>Start: {{ start }}&nbsp;</h3>
-            <h3 class=header3>End:&nbsp;&nbsp;   {{ end }}&nbsp;</h3> -->
+    {% block body %}
+        <table class='table borderless', width="100%">
+            <tr>
+                <td rowspan="2"><h1>Jobid {{ jobid }}</h1></td>
+                <td><h3 class=header3>Start: {{ start }}&nbsp;</h3></td>
+            </tr>
+            <tr>
+                <td><h3 class=header3>End:&nbsp;&nbsp;   {{ end }}&nbsp;</h3></td>
+            </tr>
+        </table>
 
-            <table class='table borderless', width="100%">
-                <tr>
-                    <td rowspan="2"><h1>Jobid {{ jobid }}</h1></td>
-                    <td><h3 class=header3>Start: {{ start }}&nbsp;</h3></td>
-                </tr>
-                <tr>
-                    <td><h3 class=header3>End:&nbsp;&nbsp;   {{ end }}&nbsp;</h3></td>
-                </tr>
-            </table>
+        <hr>
 
-            <hr>
-
-            <form class=form1 action="{{ url_for('redirect_to_main') }}" method=post class=redirect-to-main>
-                <input type=submit value='Main Page'>
-            </form>
+        <form class=form1 action="{{ url_for('redirect_to_main') }}" method=post class=redirect-to-main>
+            <input type=submit value='Main Page'>
+        </form>
+        <dt>&nbsp;
+        <form class=form1 action="{{ url_for('redirect_to_email') }}" method=post class=redirect-to-email>
+            <input type=submit value='Email Graphs'>
+        </form>
+        <div>
             <dt>&nbsp;
-            <form class=form1 action="{{ url_for('redirect_to_email') }}" method=post class=redirect-to-email>
-                <input type=submit value='Email Graphs'>
-            </form>
-            <div>
-                <dt>&nbsp;
-                <dt>&nbsp;
-            </div>
+            <dt>&nbsp;
+        </div>
 
-            <form action="{{ url_for('graph_selection') }}" method=post class=graph-selection>
-              <div class="wrapper">
-                <button type=submit name='action' value='all'>Aggregate</button>
-                <button type=submit name='action' value='avg'>Stats</button>
-                <button type=submit name='action' value='cpu'>CPU Used</button>
-                <button type=submit name='action' value='mem_free'>Memory</button>
-                <button type=submit name='action' value='bytes_in'>Network In</button>
-                <button type=submit name='action' value='bytes_out'>Network Out</button>
-                {% if gpu_param %}
-                <button type=submit name='action' value='gpu0_util'>GPU Used</button>
-                <button type=submit name='action' value='gpu0_mem_util'>GPU Memory</button>
-                {% endif %}
-              </div>
-            </form>
-        {% endblock %}
-        {% for image in images %}
-            <a class="image" href="{{ image.src }}" style="width: {{ image.width }}px; height: {{ image.height }}px">
-                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="{{ image.src }}?w={{ image.width }}&amp;h={{ image.height }}" width="{{ image.width }}" height="{{ image.height }}" />
-            </a>
-        {% endfor %}
-    {% endif %}
+        <form action="{{ url_for('graph_selection', id=jobid) }}" method=post class=graph-selection>
+          <div class="wrapper">
+            <button type=submit name='action' value='all'>Aggregate</button>
+            <button type=submit name='action' value='avg'>Stats</button>
+            <button type=submit name='action' value='cpu'>CPU Used</button>
+            <button type=submit name='action' value='mem_free'>Memory</button>
+            <button type=submit name='action' value='bytes_in'>Network In</button>
+            <button type=submit name='action' value='bytes_out'>Network Out</button>
+            {% if gpu_param %}
+            <button type=submit name='action' value='gpu0_util'>GPU Used</button>
+            <button type=submit name='action' value='gpu0_mem_util'>GPU Memory</button>
+            {% endif %}
+          </div>
+        </form>
+    {% endblock %}
+    {% for image in images %}
+        <a class="image" href="{{ image.src }}" style="width: {{ image.width }}px; height: {{ image.height }}px">
+            <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="{{ image.src }}?w={{ image.width }}&amp;h={{ image.height }}" width="{{ image.width }}" height="{{ image.height }}" />
+        </a>
+    {% endfor %}
 </body>

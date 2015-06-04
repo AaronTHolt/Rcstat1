@@ -9,8 +9,13 @@ def get_data(jobid, debug):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = p.communicate()
 
+    # Handle: Broken sacct
+    if 'sacct: error: Problem talking to the database: Connection timed out' in err:
+        return False, False, False, False
+
+    # Handle: No data from sacct command
     file_length = sum(1 for line in open('sacct_output/{j}.txt'.format(j=jobid)))
-    if file_length == 1:
+    if file_length <= 1:
         return False, False, False, False
 
     with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
@@ -25,17 +30,16 @@ def get_data(jobid, debug):
     # Expand nodes if necessary and flatten nested lists
     node_names = expand_node_list(node_names)
     
-    # Use 4 month window for debugging
-    #debug = True
-    if debug:
-        t1 = '2015-05-25T10:00:00'
-        t2 = '2015-05-29T12:44:02'
+    ## Use long time window for debugging
+    # t1 = '2015-05-25T10:00:00'
+    # t2 = '2015-06-03T12:44:02'
 
     if t1 == 'Unknown':
         start = t1
         stop = t1
     else:
         start = convert_enddate_to_seconds(t1)
+        # Handle: Job not yet finished
         try:
             stop = convert_enddate_to_seconds(t2)
         except ValueError:

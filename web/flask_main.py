@@ -13,7 +13,7 @@ from emailrrd import send_email
 
 
 # configuration
-DEBUG = True
+# DEBUG = True
 SECRET_KEY = 'super secret development key'
 USERNAME = 'admin'
 PASSWORD = 'default'
@@ -21,38 +21,56 @@ PASSWORD = 'default'
 # create Flask instance
 app = Flask(__name__)
 app.config.from_object(__name__)
-# app.config["CACHE_TYPE"] = "null"
-
-# app.config.from_envvar('FLASKR_SETTINGS', silent=True)
-
 
 ## Display main page
-@app.route('/')
+@app.route('/rcstatmain')
 def show_entries():
     return render_template('show_entries.html')
+
+## Button back to main page
+@app.route('/main', methods=['POST'])
+def redirect_to_main():
+    return redirect(url_for('show_entries'))
+
+# Login page
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        return redirect(url_for('show_entries'))
+    return redirect(url_for('show_entries'))
 
 ## To email graphs
 @app.route('/email', methods=['POST'])
 def redirect_to_email():
-    if not session.get('logged_in'):
-        abort(401)
     return render_template('email_page.html')
 
 ## Submit jobid button
 @app.route('/graph_summary', methods=['POST'])
 def redirect_to_summary_graphs():
-    if not session.get('logged_in'):
-        abort(401)
     return redirect_to_graphs('all')
 
 ## CPU button
+# @app.route('/graph_select', methods=['POST'])
 @app.route('/graph_select', methods=['POST'])
 def graph_selection():
-    if not session.get('logged_in'):
-        abort(401)
-    # graph_type = 'cpu'
+
     graph_type = request.form['action']
+    # asdf = request.args.get('id')
+    # # value = request.form['value']
+
+    # print "gtypem = ", graph_type
+    # print "asdf = ", asdf
+
     jobid = session['jobid']
+    # return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
+    return job(jobid, graph_type)
+
+
+@app.route('/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
+def job(jobid, graph_type):
+
+    print jobid, graph_type
 
     category = ''
     if graph_type == 'all' or graph_type == 'avg':
@@ -70,9 +88,6 @@ def graph_selection():
 ## After submit button or buttons on all_graph
 # @app.route('/graph_button2', methods=['POST'])
 def redirect_to_graphs(graph_type):
-    if not session.get('logged_in'):
-        abort(401)
-
     error = None
     jobid = request.form['text']
     session['jobid'] = jobid
@@ -88,6 +103,9 @@ def redirect_to_graphs(graph_type):
         if start == 'Unknown':
             error = 'No start time listed'
             return render_template('show_entries.html', error=error)
+        elif start == False:
+            error = 'No job data found'
+            return render_template('show_entries.html', error=error)
         session['start'] = convert_seconds_to_enddate(start)
         session['end'] = convert_seconds_to_enddate(end)
         session['gpu_param'] = gpu_param
@@ -99,9 +117,7 @@ def redirect_to_graphs(graph_type):
     session['images'] = images
         
     total_image_number = get_num_images(jobid)
-    # print "TOTAL IMAGE NUMBER", total_image_number
-    # images = sorted(images)
-    ## TODO: raise exception that a job wasn't found...
+
     # Input that wasn't a job
     if total_image_number<=0:
         error = 'No matching Job ID or no data'
@@ -113,25 +129,14 @@ def redirect_to_graphs(graph_type):
 #Email page back to graph page
 @app.route('/graphs2', methods=['POST'])
 def redirect_to_graphs2():
-    if not session.get('logged_in'):
-        abort(401)
     return render_template('all_graph.html', images=session['images'], 
                             jobid=session['jobid'], error=None, 
                             gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
 
-## Button back to main page
-@app.route('/main', methods=['POST'])
-def redirect_to_main():
-    if not session.get('logged_in'):
-        abort(401)
-    return redirect(url_for('show_entries'))
-
 ## Emailbutton onclick
 @app.route('/email_it', methods=['POST'])
 def send_an_email():
-    if not session.get('logged_in'):
-        abort(401)
     error = None
     addr = request.form['text']
     # print "ADDRESS SENT TO", addr
@@ -139,28 +144,6 @@ def send_an_email():
     if sent == False:
         error = 'Unable to send email'
     return render_template('email_page.html', error=error)
-
-## Login page
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
-            flash('You were logged in')
-            return redirect(url_for('show_entries'))
-    return render_template('login.html', error=error)
-
-## Logout link
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out')
-    return redirect(url_for('show_entries'))
 
 def get_num_images(jobid):
     images = []
@@ -226,4 +209,4 @@ def dated_url_for(endpoint, **values):
 
 if __name__ == '__main__':
     # app.run()
-    app.run(host='0.0.0.0')
+    app.run(host='10.225.160.55')
