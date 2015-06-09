@@ -49,7 +49,7 @@ def redirect_to_email():
 ## Submit jobid button
 @app.route('/graph_summary', methods=['GET', 'POST'])
 def redirect_to_summary_graphs():
-    return redirect_to_graphs('all')
+    return redirect_to_graphs('agg')
 
 ## CPU button
 # @app.route('/graph_select', methods=['POST'])
@@ -58,19 +58,6 @@ def graph_selection():
     graph_type = request.form['action']
     jobid = session['jobid']
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
-
-@app.route('/job-<jobid>-<graph_type>', methods=['GET', 'POST'])
-def job(jobid, graph_type):
-    category = ''
-    if graph_type == 'all' or graph_type == 'avg':
-        category = ''
-    else:
-        category = 'node'
-    images = get_images(jobid, graph_type, category)
-    error = None
-    return render_template('all_graph.html', images=images, jobid=jobid,
-                            error=error, gpu_param=session['gpu_param'],
-                            start=session['start'], end=session['end'])
 
 ## After submit button or buttons on all_graph
 # @app.route('/graph_button2', methods=['POST'])
@@ -84,9 +71,22 @@ def redirect_to_graphs(graph_type):
         error = 'Please enter a valid Job ID'
         return render_template('show_entries.html', error=error)
 
+    return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
+
+#Email page back to graph page
+@app.route('/graphs2', methods=['POST'])
+def redirect_to_graphs2():
+    return render_template('all_graph.html', images=session['images'], 
+                            jobid=session['jobid'], error=None, 
+                            gpu_param=session['gpu_param'],
+                            start=session['start'], end=session['end'])
+
+@app.route('/job-<jobid>-<graph_type>', methods=['GET', 'POST'])
+def job(jobid, graph_type):
+    print jobid, graph_type
     # Generate graphs, check if gpu job
     try:
-        gpu_param, missing_set, start, end = process(jobid)
+        gpu_param, missing_set, start, end = process(jobid, graph_type)
         if start == 'Unknown':
             error = 'No start time listed'
             return render_template('show_entries.html', error=error)
@@ -107,15 +107,15 @@ def redirect_to_graphs(graph_type):
         error = 'No matching Job ID or no data'
         return render_template('show_entries.html', error=error)
 
-    return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
-
-
-#Email page back to graph page
-@app.route('/graphs2', methods=['POST'])
-def redirect_to_graphs2():
-    return render_template('all_graph.html', images=session['images'], 
-                            jobid=session['jobid'], error=None, 
-                            gpu_param=session['gpu_param'],
+    category = ''
+    if graph_type == 'agg' or graph_type == 'avg':
+        category = ''
+    else:
+        category = 'node'
+    images = get_images(jobid, graph_type, category)
+    error = None
+    return render_template('all_graph.html', images=images, jobid=jobid,
+                            error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
 
 ## Emailbutton onclick

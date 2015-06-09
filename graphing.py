@@ -14,7 +14,9 @@ global debug
 debug = False
 # debug = True
 
-def process(jobid):
+def process(jobid, tab):
+    ## tab is which tab to be loaded
+    ## ex: aggregate, stats, cpu, etc.
     global debug
 
     # Get job information from slurm
@@ -40,8 +42,22 @@ def process(jobid):
     except OSError:
         pass
 
-    desired_graphs = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
+    desired_graphs = []
+    if tab == 'agg' or tab == 'avg':
+        desired_graphs = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
           'bytes_out.rrd']
+    elif tab == 'cpu':
+        desired_graphs = ['cpu_user.rrd']
+    elif tab == 'mem_free':
+        desired_graphs = ['mem_free.rrd']
+    elif tab == 'bytes_in':
+        desired_graphs = ['bytes_in.rrd']
+    elif tab == 'bytes_out':
+        desired_graphs = ['bytes_out.rrd']
+    # elif tab == 'gpu':
+    #     desired_graphs = ['mem_free.rrd']
+    # elif tab == 'gpumem':
+    #     desired_graphs = ['mem_free.rrd']
 
     #If this is a GPU job, add gpu graphs
     gpu_param = False
@@ -68,6 +84,9 @@ def process(jobid):
                                           c=cluster, n=node, g=graph)
                     graph_list.append([path, node, cluster, jobid, graph])
 
+    print "Length graph list = ", len(graph_list)
+    print graph_list[0]
+
     available_set = Set()
     missing_set = Set()
     for data in graph_list:
@@ -79,12 +98,53 @@ def process(jobid):
             missing_set.add(data[1])
             # print "BAD", data[1], data[4]
     # print "Available =", len(available_set), available_set
-    print "Missing =", len(missing_set), missing_set
+    # print "Missing =", len(missing_set), missing_set
     # print "Nodes Used =", len(Set(node_names)-missing_set), Set(node_names)-missing_set    
 
+    ## Move this after all the nodes start reporting
+    ## and there are no more 'Missing'
+    if tab != 'agg' and tab != 'avg':
+        return gpu_param, missing_set, start, stop
+    
+    # all_node_graph(start, stop, jobid, node_names, cluster, 
+    #                 graph_list, gpu_param, missing_set)
 
-    all_node_graph(start, stop, jobid, node_names, cluster, 
-                    graph_list, gpu_param, missing_set)
+    Max_Lines = 10 # Maximum number of lines on a graph
+    index = 0
+    graph_dict = defaultdict(list)
+    num_colors = 0
+    for data in graph_list:
+        if data[1] in missing_set:
+            pass
+        else:
+            graph_dict[index].append(data)
+            if data[4] == 'bytes_out.rrd':
+                num_colors += 1
+            if num_colors >= Max_Lines + Max_Lines * index:
+                index += 1
+
+    # if more than Max_Lines nodes used, generate average plot
+    # and keep Max_Lines plots per graph
+    if num_colors == 0:
+        pass
+    else:
+        if num_colors >= Max_Lines:
+            if tab == 'avg':
+                all_average_graph(start, stop, jobid, node_names, cluster, 
+                        graph_list, num_colors, gpu_param, missing_set)
+            elif tab == 'agg':
+                for index in graph_dict:
+                    graphit(start, stop, jobid, node_names, cluster,
+                            graph_dict[index], index, num_colors, 
+                            Max_Lines, gpu_param, missing_set)
+        else:
+            if tab == 'avg':
+                all_average_graph(start, stop, jobid, node_names, cluster, 
+                        graph_list, num_colors, gpu_param, missing_set)
+            elif tab == 'agg':
+                graphit(start, stop, jobid, node_names, cluster,
+                        graph_dict[index], index, num_colors, 
+                        Max_Lines, gpu_param, missing_set)
 
     return gpu_param, missing_set, start, stop
 
@@ -99,7 +159,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
                   '--slope-mode']
-                  # 'Black background'
+                  ## 'Black background'
                   # '--color', "CANVAS#000000[00]",
                   # '--color', "MGRID#FFFFB0[80]",
                   # '--color', "GRID#FFFFB0[A0]",
@@ -151,44 +211,44 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
     return header
 
 
-def all_node_graph(start, stop, jobid, node_names, cluster, 
-                  graph_list, gpu_param, missing_set):
+# def all_node_graph(start, stop, jobid, node_names, cluster, 
+#                   graph_list, gpu_param, missing_set):
 
-    # Count how many lines are on a graph
-    # Split list into lists of Max_Lines
-    Max_Lines = 10 # Maximum number of lines on a graph
-    index = 0
-    graph_dict = defaultdict(list)
-    num_colors = 0
-    for data in graph_list:
-        if data[1] in missing_set:
-            pass
-        else:
-            graph_dict[index].append(data)
-            if data[4] == 'bytes_out.rrd':
-                num_colors += 1
-            if num_colors >= Max_Lines + Max_Lines * index:
-                index += 1
+#     # Count how many lines are on a graph
+#     # Split list into lists of Max_Lines
+#     Max_Lines = 10 # Maximum number of lines on a graph
+#     index = 0
+#     graph_dict = defaultdict(list)
+#     num_colors = 0
+#     for data in graph_list:
+#         if data[1] in missing_set:
+#             pass
+#         else:
+#             graph_dict[index].append(data)
+#             if data[4] == 'bytes_out.rrd':
+#                 num_colors += 1
+#             if num_colors >= Max_Lines + Max_Lines * index:
+#                 index += 1
 
 
-    # if more than Max_Lines nodes used, generate average plot
-    # and keep Max_Lines plots per graph
-    if num_colors == 0:
-        pass
-    else:
-        if num_colors >= Max_Lines:
-            all_average_graph(start, stop, jobid, node_names, cluster, 
-                    graph_list, num_colors, gpu_param, missing_set)
-            for index in graph_dict:
-                graphit(start, stop, jobid, node_names, cluster,
-                        graph_dict[index], index, num_colors, 
-                        Max_Lines, gpu_param, missing_set)
-        else:
-            all_average_graph(start, stop, jobid, node_names, cluster, 
-                    graph_list, num_colors, gpu_param, missing_set)
-            graphit(start, stop, jobid, node_names, cluster,
-                    graph_dict[index], index, num_colors, 
-                    Max_Lines, gpu_param, missing_set)
+#     # if more than Max_Lines nodes used, generate average plot
+#     # and keep Max_Lines plots per graph
+#     if num_colors == 0:
+#         pass
+#     else:
+#         if num_colors >= Max_Lines:
+#             all_average_graph(start, stop, jobid, node_names, cluster, 
+#                     graph_list, num_colors, gpu_param, missing_set)
+#             for index in graph_dict:
+#                 graphit(start, stop, jobid, node_names, cluster,
+#                         graph_dict[index], index, num_colors, 
+#                         Max_Lines, gpu_param, missing_set)
+#         else:
+#             all_average_graph(start, stop, jobid, node_names, cluster, 
+#                     graph_list, num_colors, gpu_param, missing_set)
+#             graphit(start, stop, jobid, node_names, cluster,
+#                     graph_dict[index], index, num_colors, 
+#                     Max_Lines, gpu_param, missing_set)
 
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 
@@ -257,22 +317,22 @@ def graphit(start, stop, jobid, node_names, cluster, graph_list,
                 counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
-    mem_free_header = graph_header(start,stop,jobid,cluster,'all',
+    mem_free_header = graph_header(start,stop,jobid,cluster,'agg',
                                   'mem_free',index,gpu_param)
     mem_free_graph = mem_free_header + mem_free_sources + mem_free_format
-    cpu_used_header = graph_header(start,stop,jobid,cluster,'all',
+    cpu_used_header = graph_header(start,stop,jobid,cluster,'agg',
                                   'cpu_used',index,gpu_param)
     cpu_used_graph = cpu_used_header + cpu_used_sources + cpu_used_format
-    gpu_used_header = graph_header(start,stop,jobid,cluster,'all',
+    gpu_used_header = graph_header(start,stop,jobid,cluster,'agg',
                                   'gpu0_util',index,gpu_param)
     gpu_used_graph = gpu_used_header + gpu_used_sources + gpu_used_format
-    gpu_mem_used_header = graph_header(start,stop,jobid,cluster,'all',
+    gpu_mem_used_header = graph_header(start,stop,jobid,cluster,'agg',
                                   'gpu0_mem_util',index,gpu_param)
     gpu_mem_used_graph = gpu_mem_used_header + gpu_mem_used_sources + gpu_mem_used_format
-    bytes_in_header = graph_header(start,stop,jobid,cluster,'all',
+    bytes_in_header = graph_header(start,stop,jobid,cluster,'agg',
                                   'bytes_in',index,gpu_param)
     bytes_in_graph = bytes_in_header + bytes_in_sources + bytes_in_format
-    bytes_out_header = graph_header(start,stop,jobid,cluster,'all',
+    bytes_out_header = graph_header(start,stop,jobid,cluster,'agg',
                                   'bytes_out',index,gpu_param)
     bytes_out_graph = bytes_out_header + bytes_out_sources + bytes_out_format
 

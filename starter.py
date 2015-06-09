@@ -9,7 +9,7 @@ from web.flask_main import *
 # subprocess.call("./enable_sacct.sh", shell=True)
 
 #run web app
-flask_main.app.run(host='0.0.0.0')
-# flask_main.app.run(debug=True)
+# flask_main.app.run(host='0.0.0.0')
+flask_main.app.run(debug=True)
 
 # os.system('python flask_main.py')
