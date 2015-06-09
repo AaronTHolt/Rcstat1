@@ -1,11 +1,12 @@
 # all the imports
 import rrdtool
+import os
+import string
+import StringIO
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 from contextlib import closing
-import os
 from PIL import Image
-import StringIO
 
 from graphing import *
 from Utility import convert_seconds_to_enddate
@@ -46,44 +47,30 @@ def redirect_to_email():
     return render_template('email_page.html')
 
 ## Submit jobid button
-@app.route('/graph_summary', methods=['POST'])
+@app.route('/graph_summary', methods=['GET', 'POST'])
 def redirect_to_summary_graphs():
     return redirect_to_graphs('all')
 
 ## CPU button
 # @app.route('/graph_select', methods=['POST'])
-@app.route('/graph_select', methods=['POST'])
+@app.route('/job', methods=['GET', 'POST'])
 def graph_selection():
-
     graph_type = request.form['action']
-    # asdf = request.args.get('id')
-    # # value = request.form['value']
-
-    # print "gtypem = ", graph_type
-    # print "asdf = ", asdf
-
     jobid = session['jobid']
-    # return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
-    return job(jobid, graph_type)
+    return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
-
-@app.route('/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
+@app.route('/job-<jobid>-<graph_type>', methods=['GET', 'POST'])
 def job(jobid, graph_type):
-
-    print jobid, graph_type
-
     category = ''
     if graph_type == 'all' or graph_type == 'avg':
         category = ''
     else:
         category = 'node'
-
     images = get_images(jobid, graph_type, category)
     error = None
     return render_template('all_graph.html', images=images, jobid=jobid,
-                             error=error, gpu_param=session['gpu_param'],
+                            error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
-
 
 ## After submit button or buttons on all_graph
 # @app.route('/graph_button2', methods=['POST'])
@@ -113,18 +100,15 @@ def redirect_to_graphs(graph_type):
         error = 'No matching Job ID found'
         return render_template('show_entries.html', error=error)
 
-    images = get_images(jobid, graph_type, 'all')
-    session['images'] = images
-        
     total_image_number = get_num_images(jobid)
 
     # Input that wasn't a job
     if total_image_number<=0:
         error = 'No matching Job ID or no data'
         return render_template('show_entries.html', error=error)
-    return render_template('all_graph.html', images=images, 
-                            jobid=jobid, error=error, gpu_param=gpu_param,
-                            start=session['start'], end=session['end'])
+
+    return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
+
 
 #Email page back to graph page
 @app.route('/graphs2', methods=['POST'])
@@ -207,6 +191,6 @@ def dated_url_for(endpoint, **values):
     return url_for(endpoint, **values)
 
 
-if __name__ == '__main__':
-    # app.run()
-    app.run(host='10.225.160.55')
+# if __name__ == '__main__':
+#     # app.run()
+#     app.run(host='10.225.160.55')
