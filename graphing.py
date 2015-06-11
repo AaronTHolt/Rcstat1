@@ -230,7 +230,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
         header += ['--title', '{m}Network In for {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
 
-    print "HEADER = ", header
+    # print "HEADER = ", header
     return header
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 

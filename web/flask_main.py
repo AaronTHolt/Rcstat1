@@ -43,7 +43,7 @@ def login():
     return redirect(url_for('show_entries'))
 
 ## To email graphs
-@app.route('/email', methods=['POST'])
+@app.route('/email', methods=['GET', 'POST'])
 def redirect_to_email():
     return render_template('email_page.html')
 
@@ -76,7 +76,7 @@ def redirect_to_graphs(graph_type):
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
 #Email page back to graph page
-@app.route('/graphs2', methods=['POST'])
+@app.route('/graphs2', methods=['GET'])
 def redirect_to_graphs2():
     return render_template('all_graph.html', images=session['images'], 
                             jobid=session['jobid'], error=None, 
@@ -99,7 +99,6 @@ def job(jobid, graph_type):
     if cat_image_number <= 0:
         try:
             gpu_param, missing_set, start, end = process(jobid, graph_type)
-            print start, end
             if start == 'Unknown':
                 error = '''No start time listed. 
                         Visit 'Main Page' to try a different Job ID.'''
@@ -120,7 +119,7 @@ def job(jobid, graph_type):
                                     error=error)
 
         cat_image_number = get_num_images(jobid, graph_type, category)
-        print "NUM IMAGES = ", cat_image_number
+        # print "NUM IMAGES = ", cat_image_number
 
         # Input that wasn't a job
         if cat_image_number <= 0:
@@ -131,6 +130,7 @@ def job(jobid, graph_type):
 
     
     images = get_images(jobid, graph_type, category)
+    session['images'] = images
     error = None
     return render_template('all_graph.html', images=images, jobid=jobid,
                             error=error, gpu_param=session['gpu_param'],

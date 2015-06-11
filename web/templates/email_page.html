@@ -7,10 +7,10 @@
 
 {% extends "layout.html" %}
 {% block body %}
-    <form class=form1 action="{{ url_for('redirect_to_main') }}" method=post class=redirect-to-main>
+    <form class=form1 action="{{ url_for('redirect_to_main') }}" method=get class=redirect-to-main>
         <input type=submit value='Main Page'>
     </form>
-    <form class=form1 action="{{ url_for('redirect_to_graphs2') }}" method=post class=redirect-to-graphs2>
+    <form class=form1 action="{{ url_for('redirect_to_graphs2') }}" method=get class=redirect-to-graphs2>
         <input type=submit value='Graph Page'>
     </form>
     <div>
