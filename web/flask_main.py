@@ -22,6 +22,7 @@ PASSWORD = 'default'
 # create Flask instance
 app = Flask(__name__)
 app.config.from_object(__name__)
+# app.config['SERVER_NAME'] = '0.0.0.0:5000'
 
 ## Display main page
 @app.route('/rcstatmain')
@@ -29,7 +30,7 @@ def show_entries():
     return render_template('show_entries.html')
 
 ## Button back to main page
-@app.route('/main', methods=['POST'])
+@app.route('/main', methods=['GET', 'POST'])
 def redirect_to_main():
     return redirect(url_for('show_entries'))
 
@@ -82,9 +83,9 @@ def redirect_to_graphs2():
                             gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
 
-@app.route('/job-<jobid>-<graph_type>', methods=['GET', 'POST'])
+@app.route('/static/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
 def job(jobid, graph_type):
-    print jobid, graph_type
+    # print jobid, graph_type
     # Generate graphs, check if gpu job
 
     category = ''
@@ -98,25 +99,35 @@ def job(jobid, graph_type):
     if cat_image_number <= 0:
         try:
             gpu_param, missing_set, start, end = process(jobid, graph_type)
+            print start, end
             if start == 'Unknown':
-                error = 'No start time listed'
-                return render_template('show_entries.html', error=error)
+                error = '''No start time listed. 
+                        Visit 'Main Page' to try a different Job ID.'''
+                return render_template('all_graph.html', jobid=jobid,
+                                    error=error)
             elif start == False:
-                error = 'No job data found'
-                return render_template('show_entries.html', error=error)
+                error = '''No job data found.
+                        Visit 'Main Page' to try a different Job ID.'''
+                return render_template('all_graph.html', jobid=jobid,
+                                    error=error)
             session['start'] = convert_seconds_to_enddate(start)
             session['end'] = convert_seconds_to_enddate(end)
             session['gpu_param'] = gpu_param
         except IOError:
-            error = 'No matching Job ID found'
-            return render_template('show_entries.html', error=error)
+            error = '''No matching Job ID found.
+                    Visit 'Main Page' to try a different Job ID.'''
+            return render_template('all_graph.html', jobid=jobid, 
+                                    error=error)
 
         cat_image_number = get_num_images(jobid, graph_type, category)
+        print "NUM IMAGES = ", cat_image_number
 
         # Input that wasn't a job
         if cat_image_number <= 0:
-            error = 'No matching Job ID or no data'
-            return render_template('show_entries.html', error=error)
+            error = '''No matching Job ID or no data.
+                    Visit 'Main Page' to try a different Job ID.'''
+            return render_template('all_graph.html', jobid=jobid,
+                                    error=error)
 
     
     images = get_images(jobid, graph_type, category)
@@ -138,14 +149,16 @@ def send_an_email():
 
 def get_num_images(jobid, graph_type, category):
     images = []
-    for root, dirs, files in os.walk('web/static/'):
+    # for root, dirs, files in os.walk('web/static/'):
+    for root, dirs, files in os.walk('web/static/job/{j}/{g}'.format(
+                                    j=jobid, g=graph_type)):
         for filename in [os.path.join(root, name) for name in files]:
-            if not '/'+str(jobid)+'/' in filename:
-                continue
+            # if not '/'+str(jobid)+'/' in filename:
+            #     continue
             if not category in filename:
                 continue
-            if not graph_type in filename:
-                continue
+            # if not graph_type in filename:
+            #     continue
             if not filename.endswith('.png'):
                 continue
             images.append(filename)
@@ -155,27 +168,22 @@ def get_images(jobid, graph_type, category):
     images = []
     WIDTH = 1000
     HEIGHT = 800
-    for root, dirs, files in os.walk('web/static/'):
+    # for root, dirs, files in os.walk('web/static/'):
+    for root, dirs, files in os.walk('web/static/job/{j}/{g}'.format(
+                                    j=jobid, g=graph_type)):
         for filename in [os.path.join(root, name) for name in files]:
-            if not '/'+str(jobid)+'/' in filename:
-                continue
+            # if not '/'+str(jobid)+'/' in filename:
+            #     continue
             if not category in filename:
                 continue
-            if not graph_type in filename:
-                continue
+            # if not graph_type in filename:
+            #     continue
             if not filename.endswith('.png'):
                 continue
             im = Image.open(filename)
-            w, h = im.size
-            aspect = 1.0*w/h
-            if aspect > 1.0*WIDTH/HEIGHT:
-                width = min(w, WIDTH)
-                height = width/aspect
-            else:
-                height = min(h, HEIGHT)
-                width = height*aspect
+            width, height = im.size
             temp = filename.split('/')
-            filename = temp[1]+'/'+temp[2]+'/'+temp[3]+'/'+temp[4]
+            filename = temp[2]+'/'+temp[3]+'/'+temp[4]+'/'+temp[5]
             images.append({
                 'width': int(width),
                 'height': int(height),
@@ -185,6 +193,14 @@ def get_images(jobid, graph_type, category):
     if graph_type == 'agg' or graph_type == 'avg':
         images = sorted(images, key=lambda k: k['src'], reverse=True)
     return images
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
 
 ## Next 2 sections make it so any time url_for is used
 ## the cache is reset (so the graphs update)

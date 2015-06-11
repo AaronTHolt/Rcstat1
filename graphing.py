@@ -21,6 +21,8 @@ def process(jobid, tab):
 
     # Get job information from slurm
     start, stop, cluster_names, node_names = get_data(jobid, debug)
+    # print "Cluster Names = ", cluster_names
+    # print "Node names = ", node_names
 
     #For jobs with no start time
     if start=='Unknown':
@@ -30,17 +32,43 @@ def process(jobid, tab):
     if start==False or stop==False:
         return False, False, False, False
 
+    # #make directory for jobid
+    # try:
+    #     os.mkdir('web/static/plots')
+    #     os.chmod('web/static/plots',0o777)
+    # except OSError:
+    #     pass
+    # try:
+    #     os.mkdir('web/static/plots/{j}'.format(j=jobid))
+    #     os.chmod('web/static/plots/{j}'.format(j=jobid),0o777)
+    # except OSError:
+    #     pass
     #make directory for jobid
     try:
-        os.mkdir('web/static/plots')
-        os.chmod('web/static/plots',0o777)
+        os.mkdir('web/static/job')
+        os.chmod('web/static/job',0o777)
     except OSError:
         pass
     try:
-        os.mkdir('web/static/plots/{j}'.format(j=jobid))
-        os.chmod('web/static/plots/{j}'.format(j=jobid),0o777)
+        os.mkdir('web/static/job/{j}'.format(j=jobid))
+        os.chmod('web/static/job/{j}'.format(j=jobid),0o777)
     except OSError:
         pass
+    
+    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out']
+            # 'gpu0_util', 'gpu0_mem_util']
+    for graph_type in types:
+        try:
+            # print 'web/static/job/{j}/{g}'.format(
+            #             j=jobid, g=graph_type)
+            os.mkdir('web/static/job/{j}/{g}'.format(
+                        j=jobid, g=graph_type))
+            os.chmod('web/static/job/{j}/{g}'.format(
+                        j=jobid, g=graph_type),0o777)
+        except OSError:
+            # print "Fail Sauce"
+            pass
+
 
     desired_graphs = []
     if tab == 'agg' or tab == 'avg':
@@ -74,7 +102,7 @@ def process(jobid, tab):
             for node in node_names:
                 rackname = get_rackname(node)
                 for graph in desired_graphs:
-                    path = r'/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
+                    path = r'/var/lib/ganglia/rrds/{c}/{n}-general.rc.colorado.edu/{g}'.format(
                                           c=rackname, n=node, g=graph)
                     graph_list.append([path, node, rackname, jobid, graph])
         else:
@@ -83,9 +111,6 @@ def process(jobid, tab):
                     path = r'/var/lib/ganglia/rrds/{c}/{n}.rc.colorado.edu/{g}'.format(
                                           c=cluster, n=node, g=graph)
                     graph_list.append([path, node, cluster, jobid, graph])
-
-    print "Length graph list = ", len(graph_list)
-    print graph_list[0]
 
     available_set = Set()
     missing_set = Set()
@@ -98,16 +123,13 @@ def process(jobid, tab):
             missing_set.add(data[1])
             # print "BAD", data[1], data[4]
     # print "Available =", len(available_set), available_set
-    # print "Missing =", len(missing_set), missing_set
+    print "Missing =", len(missing_set), missing_set
     # print "Nodes Used =", len(Set(node_names)-missing_set), Set(node_names)-missing_set    
 
     ## Move this after all the nodes start reporting
     ## and there are no more 'Missing'
     if tab != 'agg' and tab != 'avg':
         return gpu_param, missing_set, start, stop
-    
-    # all_node_graph(start, stop, jobid, node_names, cluster, 
-    #                 graph_list, gpu_param, missing_set)
 
     Max_Lines = 10 # Maximum number of lines on a graph
     index = 0
@@ -150,11 +172,12 @@ def process(jobid, tab):
 
 def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   index, gpu_param):
-    # graph types are currently: avg, all
+    # graph types are currently: avg, agg
     # avg is averages plotted with stats below
     # all is all lines on one plot
 
-    header = ['web/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid, 
+    # header = ['web/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid,
+    header = ['web/static/job/{j}/{g}/{r}_{g}_{i}.png'.format(j=jobid, 
                   r=rrd_type, g=graph_type, i=index),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
@@ -207,49 +230,8 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
         header += ['--title', '{m}Network In for {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
 
-    # print header
+    print "HEADER = ", header
     return header
-
-
-# def all_node_graph(start, stop, jobid, node_names, cluster, 
-#                   graph_list, gpu_param, missing_set):
-
-#     # Count how many lines are on a graph
-#     # Split list into lists of Max_Lines
-#     Max_Lines = 10 # Maximum number of lines on a graph
-#     index = 0
-#     graph_dict = defaultdict(list)
-#     num_colors = 0
-#     for data in graph_list:
-#         if data[1] in missing_set:
-#             pass
-#         else:
-#             graph_dict[index].append(data)
-#             if data[4] == 'bytes_out.rrd':
-#                 num_colors += 1
-#             if num_colors >= Max_Lines + Max_Lines * index:
-#                 index += 1
-
-
-#     # if more than Max_Lines nodes used, generate average plot
-#     # and keep Max_Lines plots per graph
-#     if num_colors == 0:
-#         pass
-#     else:
-#         if num_colors >= Max_Lines:
-#             all_average_graph(start, stop, jobid, node_names, cluster, 
-#                     graph_list, num_colors, gpu_param, missing_set)
-#             for index in graph_dict:
-#                 graphit(start, stop, jobid, node_names, cluster,
-#                         graph_dict[index], index, num_colors, 
-#                         Max_Lines, gpu_param, missing_set)
-#         else:
-#             all_average_graph(start, stop, jobid, node_names, cluster, 
-#                     graph_list, num_colors, gpu_param, missing_set)
-#             graphit(start, stop, jobid, node_names, cluster,
-#                     graph_dict[index], index, num_colors, 
-#                     Max_Lines, gpu_param, missing_set)
-
 
 def graphit(start, stop, jobid, node_names, cluster, graph_list, 
               index, num_colors, Max_Lines, gpu_param, missing_set):
@@ -476,11 +458,12 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
 
 def single_node_graphs(start, stop, data, gpu_param):
     path, nodename, cluster, jobid, graph_type = data
+
     if 'himem' in nodename:
         nodename ='node' + nodename
 
     if graph_type == 'mem_free.rrd':
-        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
+        rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='mem_free', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Amount Free',
@@ -489,7 +472,7 @@ def single_node_graphs(start, stop, data, gpu_param):
               'LINE2:mem_free#0000FF')
 
     elif graph_type == 'cpu_user.rrd':
-        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
+        rrdtool.graph('web/static/job/{j}/cpu/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Percent (%)',
@@ -500,7 +483,7 @@ def single_node_graphs(start, stop, data, gpu_param):
 
     ## General network statistics
     elif graph_type == 'bytes_in.rrd':
-        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
+        rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
@@ -509,7 +492,7 @@ def single_node_graphs(start, stop, data, gpu_param):
               'LINE2:bytes_in#0000FF')
 
     elif graph_type == 'bytes_out.rrd':
-        rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
+        rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
@@ -519,7 +502,7 @@ def single_node_graphs(start, stop, data, gpu_param):
 
     if gpu_param:
         if graph_type == 'gpu0_util.rrd':
-            rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
+            rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
                   '--vertical-label', 'Percent (%)',
@@ -527,7 +510,7 @@ def single_node_graphs(start, stop, data, gpu_param):
                   'DEF:gpu0_util={p}:sum:AVERAGE'.format(p=path),
                   'LINE2:gpu0_util#0000FF')
         if graph_type == 'gpu0_mem_util.rrd':
-            rrdtool.graph('web/static/plots/{j}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
+            rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
                   '--start', "{begin}".format(begin=start),
                   '--end', "{end}".format(end=stop),
                   '--vertical-label', 'Percent (%)',

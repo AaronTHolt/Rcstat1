@@ -36,6 +36,8 @@ img {
     text-align: right;
 }
 
+.error          { background: #f0d6d6; padding: 0.5em; }
+
 .borderless td, .borderless th {
     border: none;
     margin: 0px;
@@ -47,19 +49,9 @@ hr {
 }
     </style>
 
-
 <script type="text/javascript">
     var jobid = {{ jobid }};
 </script>
-
-<script src="https://code.jquery.com/jquery-1.10.2.min.js" charset="utf-8"></script>
-<script src="http://luis-almeida.github.io/unveil/jquery.unveil.min.js" charset="utf-8"></script>
-<script>
-    $(document).ready(function() {
-    $('img').unveil(1000);
-    });
-</script>
-
 
 </head>
 <body>
@@ -102,10 +94,9 @@ hr {
             {% endif %}
           </div>
         </form>
+        {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
     {% endblock %}
     {% for image in images %}
-        <a class="image" href="{{ image.src }}" style="width: {{ image.width }}px; height: {{ image.height }}px">
-            <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="{{ image.src }}?w={{ image.width }}&amp;h={{ image.height }}" width="{{ image.width }}" height="{{ image.height }}" />
-        </a>
+        <img  class="image" src="{{ url_for('static', filename='') }}{{ image['src'] }}" width="{{ image.width }}" height="{{ image.height }}">
     {% endfor %}
 </body>

@@ -39,9 +39,12 @@ def get_data(jobid, debug):
         stop = t1
     else:
         start = convert_enddate_to_seconds(t1)
+        start += 3600*6
         # Handle: Job not yet finished
         try:
             stop = convert_enddate_to_seconds(t2)
+            stop += 3600*6
+            # stop = 'now'
         except ValueError:
             stop = 'now'
     # print start, stop

@@ -9,6 +9,8 @@ import numpy as np
 import colorsys
 
 def convert_seconds_to_enddate(seconds):
+    if seconds == 'now':
+        return "Still Running"
     return datetime.fromtimestamp(int(seconds)).strftime(
                                                 '%Y-%m-%d %H:%M:%S')
 
