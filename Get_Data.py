@@ -32,7 +32,7 @@ def get_data(jobid, debug):
     
     ## Use long time window for debugging
     # t1 = '2015-05-25T10:00:00'
-    # t2 = '2015-06-03T12:44:02'
+    # t2 = 'now'
 
     if t1 == 'Unknown':
         start = t1

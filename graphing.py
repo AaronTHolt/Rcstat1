@@ -1,5 +1,6 @@
 import re
 import os
+import string
 from sets import Set
 import subprocess
 import rrdtool
@@ -32,17 +33,6 @@ def process(jobid, tab):
     if start==False or stop==False:
         return False, False, False, False
 
-    # #make directory for jobid
-    # try:
-    #     os.mkdir('web/static/plots')
-    #     os.chmod('web/static/plots',0o777)
-    # except OSError:
-    #     pass
-    # try:
-    #     os.mkdir('web/static/plots/{j}'.format(j=jobid))
-    #     os.chmod('web/static/plots/{j}'.format(j=jobid),0o777)
-    # except OSError:
-    #     pass
     #make directory for jobid
     try:
         os.mkdir('web/static/job')
@@ -55,6 +45,7 @@ def process(jobid, tab):
     except OSError:
         pass
     
+    #Make directory for each graph type per jobid
     types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out']
             # 'gpu0_util', 'gpu0_mem_util']
     for graph_type in types:
@@ -73,7 +64,7 @@ def process(jobid, tab):
     desired_graphs = []
     if tab == 'agg' or tab == 'avg':
         desired_graphs = ['mem_free.rrd', 'cpu_user.rrd', 'bytes_in.rrd',
-          'bytes_out.rrd']
+                            'bytes_out.rrd']
     elif tab == 'cpu':
         desired_graphs = ['cpu_user.rrd']
     elif tab == 'mem_free':
@@ -174,7 +165,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   index, gpu_param):
     # graph types are currently: avg, agg
     # avg is averages plotted with stats below
-    # all is all lines on one plot
+    # agg is all lines on one plot
 
     # header = ['web/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid,
     header = ['web/static/job/{j}/{g}/{r}_{g}_{i}.png'.format(j=jobid, 
@@ -459,6 +450,8 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
 def single_node_graphs(start, stop, data, gpu_param):
     path, nodename, cluster, jobid, graph_type = data
 
+    print path
+
     if 'himem' in nodename:
         nodename ='node' + nodename
 
@@ -469,7 +462,7 @@ def single_node_graphs(start, stop, data, gpu_param):
               '--vertical-label', 'Amount Free',
               '--title', 'Free Memory in {c} - {n}'.format(c=cluster, n=nodename),
               'DEF:mem_free={p}:sum:AVERAGE'.format(p=path),
-              'LINE2:mem_free#0000FF')
+              'LINE2:mem_free#FF0000:{n}'.format(n=nodename))
 
     elif graph_type == 'cpu_user.rrd':
         rrdtool.graph('web/static/job/{j}/cpu/{g}_{n}.png'.format(g='cpu_used', n=nodename, j=jobid),
@@ -479,26 +472,29 @@ def single_node_graphs(start, stop, data, gpu_param):
               '--title', 'CPU used in {c} - {n}'.format(c=cluster, n=nodename),
               '--lower-limit', '-1',
               'DEF:cpu_user={p}:sum:AVERAGE'.format(p=path),
-              'LINE2:cpu_user#0000FF')
+              'LINE2:cpu_user#FF0000:{n}'.format(n=nodename))
 
     ## General network statistics
-    elif graph_type == 'bytes_in.rrd':
-        rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='bytes_in', n=nodename, j=jobid),
-              '--start', "{begin}".format(begin=start),
-              '--end', "{end}".format(end=stop),
-              '--vertical-label', 'Bytes',
-              '--title', 'Bytes In for {c} - {n}'.format(c=cluster, n=nodename),
-              'DEF:bytes_in={p}:sum:AVERAGE'.format(p=path),
-              'LINE2:bytes_in#0000FF')
-
     elif graph_type == 'bytes_out.rrd':
         rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
               '--start', "{begin}".format(begin=start),
               '--end', "{end}".format(end=stop),
               '--vertical-label', 'Bytes',
-              '--title', 'Bytes Out for {c} - {n}'.format(c=cluster, n=nodename),
+              '--title', 'Network for {c} - {n}'.format(c=cluster, n=nodename),
               'DEF:bytes_out={p}:sum:AVERAGE'.format(p=path),
-              'LINE2:bytes_out#0000FF')
+              'DEF:bytes_in={p}:sum:AVERAGE'.format(p=string.replace(
+                                    path, 'bytes_out', 'bytes_in')),
+              'LINE2:bytes_out#FF0000:Network Out - {n}'.format(n=nodename),
+              'LINE2:bytes_in#0000FF:Network In - {n}'.format(n=nodename))
+
+    # elif graph_type == 'bytes_out.rrd':
+    #     rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='bytes_out', n=nodename, j=jobid),
+    #           '--start', "{begin}".format(begin=start),
+    #           '--end', "{end}".format(end=stop),
+    #           '--vertical-label', 'Bytes',
+    #           '--title', 'Bytes Out for {c} - {n}'.format(c=cluster, n=nodename),
+    #           'DEF:bytes_out={p}:sum:AVERAGE'.format(p=path),
+    #           'LINE2:bytes_out#0000FF')
 
     if gpu_param:
         if graph_type == 'gpu0_util.rrd':
@@ -508,7 +504,7 @@ def single_node_graphs(start, stop, data, gpu_param):
                   '--vertical-label', 'Percent (%)',
                   '--title', 'GPU used in {c} - {n}'.format(c=cluster, n=nodename),
                   'DEF:gpu0_util={p}:sum:AVERAGE'.format(p=path),
-                  'LINE2:gpu0_util#0000FF')
+                  'LINE2:gpu0_util#FF0000:{n}'.format(n=nodename))
         if graph_type == 'gpu0_mem_util.rrd':
             rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
                   '--start', "{begin}".format(begin=start),
@@ -516,7 +512,7 @@ def single_node_graphs(start, stop, data, gpu_param):
                   '--vertical-label', 'Percent (%)',
                   '--title', 'GPU Memory used in {c} - {n}'.format(c=cluster, n=nodename),
                   'DEF:gpu0_mem_util={p}:sum:AVERAGE'.format(p=path),
-                  'LINE2:gpu0_mem_util#0000FF')
+                  'LINE2:gpu0_mem_util#FF0000:{n}'.format(n=nodename))
 
 if __name__ == "__main__":
   # process(jobid)

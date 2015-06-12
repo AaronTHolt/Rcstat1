@@ -54,7 +54,7 @@ def redirect_to_summary_graphs():
 
 ## Graph type selection button on-click
 # @app.route('/graph_select', methods=['POST'])
-@app.route('/job-<id1>', methods=['GET', 'POST'])
+@app.route('/job/<id1>', methods=['GET', 'POST'])
 def graph_selection(id1):
     graph_type = request.form['action']
     # jobid = session['jobid']
@@ -149,16 +149,11 @@ def send_an_email():
 
 def get_num_images(jobid, graph_type, category):
     images = []
-    # for root, dirs, files in os.walk('web/static/'):
     for root, dirs, files in os.walk('web/static/job/{j}/{g}'.format(
                                     j=jobid, g=graph_type)):
         for filename in [os.path.join(root, name) for name in files]:
-            # if not '/'+str(jobid)+'/' in filename:
-            #     continue
             if not category in filename:
                 continue
-            # if not graph_type in filename:
-            #     continue
             if not filename.endswith('.png'):
                 continue
             images.append(filename)
@@ -168,16 +163,11 @@ def get_images(jobid, graph_type, category):
     images = []
     WIDTH = 1000
     HEIGHT = 800
-    # for root, dirs, files in os.walk('web/static/'):
     for root, dirs, files in os.walk('web/static/job/{j}/{g}'.format(
                                     j=jobid, g=graph_type)):
         for filename in [os.path.join(root, name) for name in files]:
-            # if not '/'+str(jobid)+'/' in filename:
-            #     continue
             if not category in filename:
                 continue
-            # if not graph_type in filename:
-            #     continue
             if not filename.endswith('.png'):
                 continue
             im = Image.open(filename)

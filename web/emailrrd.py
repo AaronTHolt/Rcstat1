@@ -17,14 +17,14 @@ def send_email(toaddress, jobid):
 
     # server.login("testuser3216", "imadeapassword!!!")
 
-    fromaddr = "NO REPLY"
+    fromaddr = 'NO REPLY <rcmail.rc.colorado.edu>'
     # toaddr = "holtat@colorado.edu"
     toaddr = toaddress
     msgRoot = MIMEMultipart()
     msgRoot['From'] = fromaddr
     msgRoot['To'] = toaddr
-    msgRoot['Subject'] = "Graphs for job {j}".format(j=jobid)
-    msgRoot.preamble = 'This is a multi-part message in MIME format.'
+    msgRoot['Subject'] = 'Graphs for job {j}'.format(j=jobid)
+    # msgRoot.preamble = 'This is a multi-part message in MIME format.'
 
     # Encapsulate the plain and HTML versions of the message body in an
     # 'alternative' part, so message agents can decide which they want to display.
@@ -37,11 +37,9 @@ def send_email(toaddress, jobid):
     msgAlternative.attach(msgText)
 
     image_paths = []
-    for root, dirs, files in os.walk('web/static/'):
+    for root, dirs, files in os.walk('web/static/job/{j}'.format(j=jobid)):
         for filename in [os.path.join(root, name) for name in files]:
-            if not '/'+str(jobid)+'/' in filename:
-                continue
-            if not 'all' in filename:
+            if not 'agg' in filename:
                 continue
             if not filename.endswith('.png'):
                 continue

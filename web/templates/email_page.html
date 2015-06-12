@@ -20,7 +20,7 @@
     <form action="{{ url_for('send_an_email') }}" method=post class=send-an-email>
       <dl>
         <dt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Email Address:
-        <dd><textarea name=text rows=1 cols=50></textarea>
+        <dd><textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
         <dd><input type=submit value=Email></dd>  
         <dt>&nbsp;
         <dt>&nbsp;
