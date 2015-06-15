@@ -5,7 +5,7 @@
     <title></title>
     <meta charset="utf-8" />
     <style>
-a, h1, h2, h3       { color: #377ba8; }
+a, h1, h2, h3       { color: #488cb9; }
 h1, h2, h3          { font-family: 'Georgia', serif; margin: 0; }
 /*h1              { border-bottom: 2px solid #eee; }*/
 h2              { font-size: 1.2em; }
@@ -43,6 +43,26 @@ img {
     margin: 0px;
 }
 
+.btn1{
+    border : solid 1px #e6e6e6;
+    border-radius : 5px;
+    moz-border-radius : 5px;
+    -webkit-box-shadow : 0px 0px 2px rgba(0,0,0,1.0);
+    -moz-box-shadow : 0px 0px 2px rgba(0,0,0,1.0);
+    box-shadow : 0px 0px 2px rgba(0,0,0,1.0);
+    font-size : 15px;
+    color : #000000;
+    padding : 1px 17px;
+    background : #ffffff;
+    background : -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(48%,#f1f1f1), color-stop(100%,#e1e1e1), color-stop(100%,#f6f6f6));
+    background : -moz-linear-gradient(top, #ffffff 0%, #f1f1f1 48%, #e1e1e1 100%, #f6f6f6 100%);
+    background : -webkit-linear-gradient(top, #ffffff 0%, #f1f1f1 48%, #e1e1e1 100%, #f6f6f6 100%);
+    background : -o-linear-gradient(top, #ffffff 0%, #f1f1f1 48%, #e1e1e1 100%, #f6f6f6 100%);
+    background : -ms-linear-gradient(top, #ffffff 0%, #f1f1f1 48%, #e1e1e1 100%, #f6f6f6 100%);
+    background : linear-gradient(top, #ffffff 0%, #f1f1f1 48%, #e1e1e1 100%, #f6f6f6 100%);
+    filter : progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f6f6f6',GradientType=0 );
+}
+
 hr {
     height: 4px;
     background-color: #EEEEEE
@@ -69,11 +89,11 @@ hr {
         <hr>
 
         <form class=form1 action="{{ url_for('redirect_to_main') }}" method=get class=redirect-to-main>
-            <input type=submit value='Main Page'>
+            <input class=btn1 type=submit value='Main Page'>
         </form>
         <dt>&nbsp;
         <form class=form1 action="{{ url_for('redirect_to_email') }}" method=get class=redirect-to-email>
-            <input type=submit value='Email Graphs'>
+            <input class=btn1 type=submit value='Email Graphs'>
         </form>
         <div>
             <dt>&nbsp;
@@ -84,14 +104,14 @@ hr {
           <div class="wrapper">
 
 
-            <button type=submit name='action' value='agg'>Aggregate</button>
-            <button type=submit name='action' value='avg'>Stats</button>
-            <button type=submit name='action' value='cpu'>CPU Used</button>
-            <button type=submit name='action' value='mem_free'>Memory</button>
-            <button type=submit name='action' value='bytes_out'>Network</button>
+            <button class=btn1 type=submit name='action' value='agg'>Aggregate</button>
+            <button class=btn1 type=submit name='action' value='avg'>Stats</button>
+            <button class=btn1 type=submit name='action' value='cpu'>CPU Used</button>
+            <button class=btn1 type=submit name='action' value='mem_free'>Memory</button>
+            <button class=btn1 type=submit name='action' value='bytes_out'>Network</button>
             {% if gpu_param %}
-            <button type=submit name='action' value='gpu0_util'>GPU Used</button>
-            <button type=submit name='action' value='gpu0_mem_util'>GPU Memory</button>
+            <button class=btn1 type=submit name='action' value='gpu0_util'>GPU Used</button>
+            <button class=btn1 type=submit name='action' value='gpu0_mem_util'>GPU Memory</button>
             {% endif %}
           </div>
         </form>

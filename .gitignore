@@ -12,3 +12,5 @@
 *.bz2
 *.png
 *.txt
+*.pyc
+*.zip

@@ -3,8 +3,8 @@
     <form action="{{ url_for('redirect_to_summary_graphs') }}" method=post class=get-job-graphs>
       <dl>
         <dt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Enter Job ID:
-        <dd><textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
-        <dd><input type=submit value=submit>
+        <dd><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
+        <dd><input class=btn1 type=submit value=submit>
         {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}  
         <dt>&nbsp;
         <dt>&nbsp;

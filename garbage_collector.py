@@ -8,7 +8,7 @@ import shutil
 #delete plots and text files that are over one week old
 one_week_ago = time.time() - 604800
 # one_minutes_ago = time.time() - 60  #for testing
-directory1 = 'web/static/plots/'
+directory1 = 'web/static/job/'
 directory2 = 'sacct_output/'
 
 while True:
