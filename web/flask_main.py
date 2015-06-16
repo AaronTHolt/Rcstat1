@@ -24,7 +24,7 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 ## Display main page
-@app.route('/rcstatmain/<input type="hidden")
+@app.route('/rcstatmain')
 def show_entries(error=None):
     error = request.args.get('error')
     return render_template('show_entries.html', error=error)
