@@ -12,23 +12,26 @@ directory1 = 'web/static/job/'
 directory2 = 'sacct_output/'
 
 while True:
-    os.chdir(directory1)
-    for somefile in os.listdir('.'):
-        st=os.stat(somefile)
-        mtime=st.st_mtime
-        if mtime < one_week_ago:
-            # print('remove %s'%somefile)
-            shutil.rmtree(somefile) 
+    try:
+        os.chdir(directory1)
+        for somefile in os.listdir('.'):
+            st=os.stat(somefile)
+            mtime=st.st_mtime
+            if mtime < one_week_ago:
+                # print('remove %s'%somefile)
+                shutil.rmtree(somefile) 
 
-    os.chdir('../../../')
-    os.chdir(directory2)
-    for somefile in os.listdir('.'):
-        st=os.stat(somefile)
-        mtime=st.st_mtime
-        if mtime < one_week_ago:
-            # print('remove %s'%somefile)
-            os.unlink(somefile) 
-    os.chdir('../')
+        os.chdir('../../../')
+        os.chdir(directory2)
+        for somefile in os.listdir('.'):
+            st=os.stat(somefile)
+            mtime=st.st_mtime
+            if mtime < one_week_ago:
+                # print('remove %s'%somefile)
+                os.unlink(somefile) 
+        os.chdir('../')
+    except OSError:
+        pass
 
 
     time.sleep(86400)  #run daily

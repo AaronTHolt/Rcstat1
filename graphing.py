@@ -450,7 +450,7 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
 def single_node_graphs(start, stop, data, gpu_param):
     path, nodename, cluster, jobid, graph_type = data
 
-    print path
+    # print path
 
     if 'himem' in nodename:
         nodename ='node' + nodename

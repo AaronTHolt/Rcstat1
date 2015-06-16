@@ -45,6 +45,10 @@ def send_email(toaddress, jobid):
                 continue
             image_paths.append(filename)
 
+    if len(image_paths) <= 0:
+        server.quit()
+        return 'NoImages'
+
     for path in image_paths:
         fp = open(path, 'rb')
         img = MIMEImage(fp.read())
