@@ -201,8 +201,8 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
         header += ['--title', '{m}CPU used in {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
         header += ['-X', '0']
-        # header += ['--upper-limit', '100']
-        # header += ['--lower-limit', '0']
+        header += ['--upper-limit', '10']
+        header += ['--lower-limit', '0']
 
     elif rrd_type == 'gpu0_util':
         header += ['--vertical-label', 'Percent (%)']
