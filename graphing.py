@@ -46,8 +46,8 @@ def process(jobid, tab):
         pass
     
     #Make directory for each graph type per jobid
-    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out',
-            'gpu0_util', 'gpu0_mem_util']
+    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out']
+            # 'gpu0_util', 'gpu0_mem_util']
     for graph_type in types:
         try:
             # print 'web/static/job/{j}/{g}'.format(
@@ -73,10 +73,10 @@ def process(jobid, tab):
         desired_graphs = ['bytes_in.rrd']
     elif tab == 'bytes_out':
         desired_graphs = ['bytes_out.rrd']
-    elif tab == 'gpu':
-        desired_graphs = ['gpu0_util.rrd']
-    elif tab == 'gpumem':
-        desired_graphs = ['gpu0_mem_util.rrd']
+    # elif tab == 'gpu':
+    #     desired_graphs = ['gpu0_util.rrd']
+    # elif tab == 'gpumem':
+    #     desired_graphs = ['gpu0_mem_util.rrd']
 
     # #If this is a GPU job, add gpu graphs
     gpu_param = False
@@ -356,23 +356,23 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
                       i=counter, p=data[0]))
                 mem_free_sources.append('VDEF:mem_free_avg{i}=mem_free{i},AVERAGE'.format(i=counter))
                 if counter == 0:
-                    mem_free_format.append('COMMENT:               MIN       MAX      AVERAGE                ') 
+                    mem_free_format.append('COMMENT:               MAX       MIN      AVERAGE                ') 
                 mem_free_format.append('{L}:mem_free_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                mem_free_format.append('GPRINT:mem_free{i}:MIN:%6.2lf %S'.format(i=counter))
-                mem_free_format.append('GPRINT:mem_free{i}:MAX:%6.2lf %S'.format(i=counter))
-                mem_free_format.append('GPRINT:mem_free{i}:AVERAGE:%6.2lf %S\l'.format(i=counter))
+                mem_free_format.append('GPRINT:mem_free{i}:MAX:%6.2lf %s'.format(i=counter))
+                mem_free_format.append('GPRINT:mem_free{i}:MIN:%6.2lf %s'.format(i=counter))
+                mem_free_format.append('GPRINT:mem_free{i}:AVERAGE:%6.2lf %s\l'.format(i=counter))
 
             elif data[4] == 'cpu_user.rrd':
                 cpu_used_sources.append('DEF:cpu_user{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
                 cpu_used_sources.append('VDEF:cpu_user_avg{i}=cpu_user{i},AVERAGE'.format(i=counter))
                 if counter == 0:
-                    cpu_used_format.append('COMMENT:                MIN        MAX       AVERAGE            ')
+                    cpu_used_format.append('COMMENT:                MAX        MIN       AVERAGE            ')
                 cpu_used_format.append('{L}:cpu_user_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                cpu_used_format.append('GPRINT:cpu_user{i}:MIN:%6.1lf %% '.format(i=counter))
                 cpu_used_format.append('GPRINT:cpu_user{i}:MAX:%6.1lf %% '.format(i=counter))
+                cpu_used_format.append('GPRINT:cpu_user{i}:MIN:%6.1lf %% '.format(i=counter))
                 cpu_used_format.append('GPRINT:cpu_user{i}:AVERAGE:%6.1lf %% \l'.format(i=counter))
 
             elif data[4] == 'gpu0_util.rrd':
@@ -380,48 +380,48 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
                       i=counter, p=data[0]))
                 gpu_used_sources.append('VDEF:gpu_used_avg{i}=gpu0_util{i},AVERAGE'.format(i=counter))
                 if counter == 0:
-                    gpu_used_format.append('COMMENT:                MIN        MAX       AVERAGE            ')
+                    gpu_used_format.append('COMMENT:                MAX        MIN       AVERAGE            ')
                 gpu_used_format.append('{L}:gpu_used_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                gpu_used_format.append('GPRINT:gpu0_util{i}:MIN:%6.1lf %S%%'.format(i=counter))
-                gpu_used_format.append('GPRINT:gpu0_util{i}:MAX:%6.1lf %S%%'.format(i=counter))
-                gpu_used_format.append('GPRINT:gpu0_util{i}:AVERAGE:%6.1lf %S%%\l'.format(i=counter))
+                gpu_used_format.append('GPRINT:gpu0_util{i}:MAX:%6.1lf %s%%'.format(i=counter))
+                gpu_used_format.append('GPRINT:gpu0_util{i}:MIN:%6.1lf %s%%'.format(i=counter))
+                gpu_used_format.append('GPRINT:gpu0_util{i}:AVERAGE:%6.1lf %s%%\l'.format(i=counter))
 
             elif data[4] == 'gpu0_mem_util.rrd':
                 gpu_mem_used_sources.append('DEF:gpu0_mem_util{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
                 gpu_mem_used_sources.append('VDEF:gpu_mem_used_avg{i}=gpu0_mem_util{i},AVERAGE'.format(i=counter))
                 if counter == 0:
-                    gpu_mem_used_format.append('COMMENT:               MIN       MAX      AVERAGE                ')
+                    gpu_mem_used_format.append('COMMENT:               MAX       MIN      AVERAGE                ')
                 gpu_mem_used_format.append('{L}:gpu_mem_used_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:MIN:%6.2lf %S'.format(i=counter))
-                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:MAX:%6.2lf %S'.format(i=counter))
-                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:AVERAGE:%6.2lf %S\l'.format(i=counter))
+                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:MAX:%6.2lf %s'.format(i=counter))
+                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:MIN:%6.2lf %s'.format(i=counter))
+                gpu_mem_used_format.append('GPRINT:gpu0_mem_util{i}:AVERAGE:%6.2lf %s\l'.format(i=counter))
 
             elif data[4] == 'bytes_in.rrd':
                 bytes_in_sources.append('DEF:bytes_in{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
                 bytes_in_sources.append('VDEF:bytes_in_avg{i}=bytes_in{i},AVERAGE'.format(i=counter))
                 if counter == 0:
-                    bytes_in_format.append('COMMENT:               MIN       MAX      AVERAGE                ')
+                    bytes_in_format.append('COMMENT:               MAX       MIN      AVERAGE                ')
                 bytes_in_format.append('{L}:bytes_in_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                bytes_in_format.append('GPRINT:bytes_in{i}:MIN:%6.0lf %S'.format(i=counter))
-                bytes_in_format.append('GPRINT:bytes_in{i}:MAX:%6.0lf %S'.format(i=counter))
-                bytes_in_format.append('GPRINT:bytes_in{i}:AVERAGE:%6.0lf %S\l'.format(i=counter))
+                bytes_in_format.append('GPRINT:bytes_in{i}:MAX:%6.0lf %s'.format(i=counter))
+                bytes_in_format.append('GPRINT:bytes_in{i}:MIN:%6.0lf %s'.format(i=counter))
+                bytes_in_format.append('GPRINT:bytes_in{i}:AVERAGE:%6.0lf %s\l'.format(i=counter))
 
             elif data[4] == 'bytes_out.rrd':
                 bytes_out_sources.append('DEF:bytes_out{i}={p}:sum:AVERAGE'.format(
                       i=counter, p=data[0]))
                 bytes_out_sources.append('VDEF:bytes_out_avg{i}=bytes_out{i},AVERAGE'.format(i=counter))
                 if counter == 0:
-                    bytes_out_format.append('COMMENT:               MIN       MAX      AVERAGE                ')
+                    bytes_out_format.append('COMMENT:               MAX       MIN      AVERAGE                ')
                 bytes_out_format.append('{L}:bytes_out_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                bytes_out_format.append('GPRINT:bytes_out{i}:MIN:%6.0lf %S'.format(i=counter))
-                bytes_out_format.append('GPRINT:bytes_out{i}:MAX:%6.0lf %S'.format(i=counter))
-                bytes_out_format.append('GPRINT:bytes_out{i}:AVERAGE:%6.0lf %S\l'.format(i=counter))
+                bytes_out_format.append('GPRINT:bytes_out{i}:MAX:%6.0lf %s'.format(i=counter))
+                bytes_out_format.append('GPRINT:bytes_out{i}:MIN:%6.0lf %s'.format(i=counter))
+                bytes_out_format.append('GPRINT:bytes_out{i}:AVERAGE:%6.0lf %s\l'.format(i=counter))
                 counter += 1
 
                             # [start,stop,jobid,cluster,graph_type,rrd_type]
