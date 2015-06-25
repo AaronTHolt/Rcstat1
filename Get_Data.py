@@ -46,7 +46,8 @@ def get_data(jobid, debug):
             stop += 3600*6
             # stop = 'now'
         except ValueError:
-            stop = 'now'
+            return False, False, False, False
+            # stop = 'now'
     # print start, stop
 
     return start, stop, cluster_names, node_names

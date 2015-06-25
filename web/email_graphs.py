@@ -61,6 +61,8 @@ def send_email(toaddress, jobid):
     except smtplib.SMTPRecipientsRefused:
         server.quit()
         return False
+    except:
+        return False
 
     
 

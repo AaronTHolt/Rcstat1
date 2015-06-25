@@ -5,12 +5,13 @@ import string
 import StringIO
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
+from flask_limiter import Limiter
 from contextlib import closing
 from PIL import Image
 
 from graphing import *
 from Utility import convert_seconds_to_enddate
-from emailrrd import send_email
+from email_graphs import send_email
 
 
 # configuration
@@ -21,25 +22,26 @@ PASSWORD = 'default'
 
 # create Flask instance
 app = Flask(__name__)
+limiter = Limiter(app)
 app.config.from_object(__name__)
 
 ## Display main page
 @app.route('/rcstatmain')
-def show_entries(error=None):
+def main_page(error=None):
     error = request.args.get('error')
-    return render_template('show_entries.html', error=error)
+    return render_template('main_page.html', error=error)
 
 ## Button back to main page
 @app.route('/main', methods=['GET', 'POST'])
 def redirect_to_main():
-    return redirect(url_for('show_entries', error=None))
+    return redirect(url_for('main_page', error=None))
 
 # Login page
 @app.route('/', methods=['GET', 'POST'])
 def login(error=None):
     if request.method == 'POST':
-        return redirect(url_for('show_entries', error=error))
-    return redirect(url_for('show_entries', error=error))
+        return redirect(url_for('main_page', error=error))
+    return redirect(url_for('main_page', error=error))
 
 ## To email graphs
 @app.route('/email', methods=['GET', 'POST'])
@@ -66,20 +68,6 @@ def redirect_to_graphs(graph_type):
     error = None
     jobid = request.form['text']
     session['jobid'] = jobid
-
-    #For jobid's with an '_'
-    #check both sides are digits, check length
-    if '_' in jobid:
-        split_id = jobid.split('_')
-        if ((len(split_id)>2) or (not split_id[0].isdigit()) or
-            (not split_id[1].isdigit()) or (len(jobid)>=12)):
-            error = 'Please enter a valid Job ID'
-            return render_template('show_entries.html', error=error)
-    # Handle: empty, non-numeric, negative, 9digit+
-    elif not jobid.isdigit() or len(jobid)>=9:
-        error = 'Please enter a valid Job ID'
-        return render_template('show_entries.html', error=error)
-
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
 #Email page back to graph page
@@ -91,10 +79,18 @@ def redirect_to_graphs2():
                             start=session['start'], end=session['end'])
 
 @app.route('/static/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
+@limiter.limit("1 per second")
 def job(jobid, graph_type):
-    # print jobid, graph_type
-    # Generate graphs, check if gpu job
+    '''Checks for valid jobids, generates graphs, directs
+    to all_graph page to display if successful'''
 
+    # Check for valid jobid inputs
+    valid, error = check_valid_jobid(jobid)
+    if valid == False:
+        return redirect(url_for('main_page', error=error))
+
+    # Decide whether aggregate graphs or single node graphs
+    # will be loaded
     category = ''
     if graph_type == 'agg' or graph_type == 'avg':
         category = ''
@@ -106,26 +102,30 @@ def job(jobid, graph_type):
     if cat_image_number <= 0:
         try:
             gpu_param, missing_set, start, end = process(jobid, graph_type)
-            if start == 'Unknown':
-                error = 'No start time listed for job ID {j}.'.format(j=jobid)
-                return redirect(url_for('show_entries', error=error))
-            elif start == False:
-                error = 'No job data found for job ID {j}.'.format(j=jobid)
-                return redirect(url_for('show_entries', error=error))
+            if start == False:
+                error = 'No job data found for job ID {j}. (3)'.format(j=jobid)
+                return redirect(url_for('main_page', error=error))
+            elif end == False:
+                error = "Job {j} hasn't run yet or is still running. (5)".format(j=jobid)
+                return redirect(url_for('main_page', error=error))
+            elif start == 'Unknown':
+                error = 'No start time listed for job ID {j}. (4)'.format(j=jobid)
+                return redirect(url_for('main_page', error=error))
+            
             session['start'] = convert_seconds_to_enddate(start)
             session['end'] = convert_seconds_to_enddate(end)
             session['gpu_param'] = gpu_param
         except IOError:
-            error = 'No matching Job ID found for job ID {j}.'.format(j=jobid)
-            return redirect(url_for('show_entries', error=error))
+            error = 'No matching Job ID found for job ID {j}. (1)'.format(j=jobid)
+            return redirect(url_for('main_page', error=error))
 
         cat_image_number = get_num_images(jobid, graph_type, category)
         # print "NUM IMAGES = ", cat_image_number
 
         # Input that wasn't a job
         if cat_image_number <= 0:
-            error = 'No matching Job ID or no data for job ID {j}.'.format(j=jobid)
-            return redirect(url_for('show_entries', error=error))
+            error = 'No matching Job ID or no data for job ID {j}. (2)'.format(j=jobid)
+            return redirect(url_for('main_page', error=error))
 
 
     
@@ -138,6 +138,7 @@ def job(jobid, graph_type):
 
 ## Emailbutton onclick
 @app.route('/email_it', methods=['POST'])
+@limiter.limit("1 per second")
 def send_an_email():
     error = None
     addr = request.form['text']
@@ -185,9 +186,34 @@ def get_images(jobid, graph_type, category):
         images = sorted(images, key=lambda k: k['src'], reverse=True)
     return images
 
+def check_valid_jobid(jobid):
+    #For jobid's with an '_'
+    #check both sides are digits, check length
+    if '_' in jobid:
+        split_id = jobid.split('_')
+        if ((len(split_id)>2) or (not split_id[0].isdigit()) or
+            (not split_id[1].isdigit()) or (len(jobid)>=12)):
+            error = '{j} is invalid. Please enter a valid Job ID.'.format(
+                        j=jobid)
+            return False, error
+    # Handle: empty, non-numeric, negative, 9digit+
+    elif not jobid.isdigit() or len(jobid)>=9:
+        error = '{j} is invalid. Please enter a valid Job ID'.format(
+                        j=jobid)
+        return False, error
+    return True, None
+
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template('400.html'), 400
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
+@app.errorhandler(429)
+def too_many_requests(e):
+    return render_template('429.html'), 429
 
 @app.errorhandler(500)
 def server_error(e):

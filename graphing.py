@@ -46,8 +46,8 @@ def process(jobid, tab):
         pass
     
     #Make directory for each graph type per jobid
-    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out']
-            # 'gpu0_util', 'gpu0_mem_util']
+    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out',
+            'gpu0_util', 'gpu0_mem_util']
     for graph_type in types:
         try:
             # print 'web/static/job/{j}/{g}'.format(
@@ -73,18 +73,18 @@ def process(jobid, tab):
         desired_graphs = ['bytes_in.rrd']
     elif tab == 'bytes_out':
         desired_graphs = ['bytes_out.rrd']
-    # elif tab == 'gpu':
-    #     desired_graphs = ['mem_free.rrd']
-    # elif tab == 'gpumem':
-    #     desired_graphs = ['mem_free.rrd']
+    elif tab == 'gpu':
+        desired_graphs = ['gpu0_util.rrd']
+    elif tab == 'gpumem':
+        desired_graphs = ['gpu0_mem_util.rrd']
 
-    #If this is a GPU job, add gpu graphs
+    # #If this is a GPU job, add gpu graphs
     gpu_param = False
-    for node in node_names:
-        if 'gpu' in node:
-            gpu_param = True
-            desired_graphs = ['gpu0_mem_util.rrd', 'gpu0_util.rrd'] + desired_graphs
-            break
+    # for node in node_names:
+    #     if 'gpu' in node:
+    #         gpu_param = True
+    #         desired_graphs = ['gpu0_mem_util.rrd', 'gpu0_util.rrd'] + desired_graphs
+    #         break
 
     graph_list = []
     for cluster in cluster_names:
@@ -111,6 +111,7 @@ def process(jobid, tab):
             available_set.add(data[1])
             # print "AVAIL", data[1], data[4]
         except rrdtool.error:
+            # print data
             missing_set.add(data[1])
             # print "BAD", data[1], data[4]
     # print "Available =", len(available_set), available_set
@@ -166,6 +167,9 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
     # graph types are currently: avg, agg
     # avg is averages plotted with stats below
     # agg is all lines on one plot
+
+    ## Add the following to flush rrdcached before graphing
+    # --daemon unix:/var/run/rrdcached.sock [...]
 
     # header = ['web/static/plots/{j}/{r}_{g}_{i}.png'.format(j=jobid,
     header = ['web/static/job/{j}/{g}/{r}_{g}_{i}.png'.format(j=jobid, 
@@ -496,23 +500,23 @@ def single_node_graphs(start, stop, data, gpu_param):
     #           'DEF:bytes_out={p}:sum:AVERAGE'.format(p=path),
     #           'LINE2:bytes_out#0000FF')
 
-    if gpu_param:
-        if graph_type == 'gpu0_util.rrd':
-            rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
-                  '--start', "{begin}".format(begin=start),
-                  '--end', "{end}".format(end=stop),
-                  '--vertical-label', 'Percent (%)',
-                  '--title', 'GPU used in {c} - {n}'.format(c=cluster, n=nodename),
-                  'DEF:gpu0_util={p}:sum:AVERAGE'.format(p=path),
-                  'LINE2:gpu0_util#FF0000:{n}'.format(n=nodename))
-        if graph_type == 'gpu0_mem_util.rrd':
-            rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
-                  '--start', "{begin}".format(begin=start),
-                  '--end', "{end}".format(end=stop),
-                  '--vertical-label', 'Percent (%)',
-                  '--title', 'GPU Memory used in {c} - {n}'.format(c=cluster, n=nodename),
-                  'DEF:gpu0_mem_util={p}:sum:AVERAGE'.format(p=path),
-                  'LINE2:gpu0_mem_util#FF0000:{n}'.format(n=nodename))
+    # if gpu_param:
+    #     if graph_type == 'gpu0_util.rrd':
+    #         rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_util', n=nodename, j=jobid),
+    #               '--start', "{begin}".format(begin=start),
+    #               '--end', "{end}".format(end=stop),
+    #               '--vertical-label', 'Percent (%)',
+    #               '--title', 'GPU used in {c} - {n}'.format(c=cluster, n=nodename),
+    #               'DEF:gpu0_util={p}:sum:AVERAGE'.format(p=path),
+    #               'LINE2:gpu0_util#FF0000:{n}'.format(n=nodename))
+    #     if graph_type == 'gpu0_mem_util.rrd':
+    #         rrdtool.graph('web/static/job/{j}/{g}/{g}_{n}.png'.format(g='gpu0_mem_util', n=nodename, j=jobid),
+    #               '--start', "{begin}".format(begin=start),
+    #               '--end', "{end}".format(end=stop),
+    #               '--vertical-label', 'Percent (%)',
+    #               '--title', 'GPU Memory used in {c} - {n}'.format(c=cluster, n=nodename),
+    #               'DEF:gpu0_mem_util={p}:sum:AVERAGE'.format(p=path),
+    #               'LINE2:gpu0_mem_util#FF0000:{n}'.format(n=nodename))
 
 if __name__ == "__main__":
   # process(jobid)

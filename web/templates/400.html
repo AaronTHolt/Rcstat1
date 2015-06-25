@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+{% block title %}Page Not Found{% endblock %}
+{% block body %}
+  <h1>Bad Request</h1>
+  <p>Try again?
+  <p><a href="{{ url_for('redirect_to_main') }}">Main Page</a>
+{% endblock %}
