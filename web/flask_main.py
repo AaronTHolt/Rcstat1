@@ -3,6 +3,7 @@ import rrdtool
 import os
 import string
 import StringIO
+import time
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 from flask_limiter import Limiter
@@ -79,7 +80,6 @@ def redirect_to_graphs2():
                             start=session['start'], end=session['end'])
 
 @app.route('/static/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
-@limiter.limit("1 per second")
 def job(jobid, graph_type):
     '''Checks for valid jobids, generates graphs, directs
     to all_graph page to display if successful'''
@@ -100,29 +100,21 @@ def job(jobid, graph_type):
     cat_image_number = get_num_images(jobid, graph_type, category)
 
     if cat_image_number <= 0:
+        #rate limit slurm calls
         try:
-            gpu_param, missing_set, start, end = process(jobid, graph_type)
-            if start == False:
-                error = 'No job data found for job ID {j}. (3)'.format(j=jobid)
+            if time.time() - session['last_slurm_call'] < 2.0:
+                error = "Too many slurm calls, please wait a moment"
                 return redirect(url_for('main_page', error=error))
-            elif end == False:
-                error = "Job {j} hasn't run yet or is still running. (5)".format(j=jobid)
-                return redirect(url_for('main_page', error=error))
-            elif start == 'Unknown':
-                error = 'No start time listed for job ID {j}. (4)'.format(j=jobid)
-                return redirect(url_for('main_page', error=error))
-            
-            session['start'] = convert_seconds_to_enddate(start)
-            session['end'] = convert_seconds_to_enddate(end)
-            session['gpu_param'] = gpu_param
-        except IOError:
-            error = 'No matching Job ID found for job ID {j}. (1)'.format(j=jobid)
-            return redirect(url_for('main_page', error=error))
+        #on the first load there is no 'last_slurm_call'
+        except KeyError:
+            pass
+
+        generate_job_data(jobid, graph_type)
+        session['last_slurm_call'] = time.time()
 
         cat_image_number = get_num_images(jobid, graph_type, category)
-        # print "NUM IMAGES = ", cat_image_number
 
-        # Input that wasn't a job
+        # Valid input that wasn't a job
         if cat_image_number <= 0:
             error = 'No matching Job ID or no data for job ID {j}. (2)'.format(j=jobid)
             return redirect(url_for('main_page', error=error))
@@ -135,6 +127,29 @@ def job(jobid, graph_type):
     return render_template('all_graph.html', images=images, jobid=jobid,
                             error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
+
+def generate_job_data(jobid, graph_type):
+    try:
+        gpu_param, missing_set, start, end = process(jobid, graph_type)
+        if start == False:
+            error = 'No job data found for job ID {j}. (3)'.format(j=jobid)
+            return redirect(url_for('main_page', error=error))
+        elif end == False:
+            error = "Job {j} hasn't run yet or is still running. (5)".format(j=jobid)
+            return redirect(url_for('main_page', error=error))
+        elif start == 'Unknown':
+            error = 'No start time listed for job ID {j}. (4)'.format(j=jobid)
+            return redirect(url_for('main_page', error=error))
+        
+        session['start'] = convert_seconds_to_enddate(start)
+        session['end'] = convert_seconds_to_enddate(end)
+        session['gpu_param'] = gpu_param
+    except IOError:
+        error = 'No matching Job ID found for job ID {j}. (1)'.format(j=jobid)
+        return redirect(url_for('main_page', error=error))
+    except:
+        return redirect(url_for('main_page', error='Unexpected Error'))
+    return True
 
 ## Emailbutton onclick
 @app.route('/email_it', methods=['POST'])
@@ -218,6 +233,7 @@ def too_many_requests(e):
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 500
+
 
 ## Next 2 sections make it so any time url_for is used
 ## the cache is reset (so the graphs update)

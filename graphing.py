@@ -200,6 +200,10 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
             title_modifier = 'Average '
         header += ['--title', '{m}CPU used in {c} Nodes'.format(
                   m=title_modifier, c=cluster)]
+        header += ['-X', '0']
+        # header += ['--upper-limit', '100']
+        # header += ['--lower-limit', '0']
+
     elif rrd_type == 'gpu0_util':
         header += ['--vertical-label', 'Percent (%)']
         if graph_type == 'avg':
@@ -367,9 +371,9 @@ def all_average_graph(start, stop, jobid, node_names, cluster,
                     cpu_used_format.append('COMMENT:                MIN        MAX       AVERAGE            ')
                 cpu_used_format.append('{L}:cpu_user_avg{i}{color}:{n}'.format(
                       L=thickness, i=counter, color=color_list[counter], n=data[1]))
-                cpu_used_format.append('GPRINT:cpu_user{i}:MIN:%6.1lf %S%%'.format(i=counter))
-                cpu_used_format.append('GPRINT:cpu_user{i}:MAX:%6.1lf %S%%'.format(i=counter))
-                cpu_used_format.append('GPRINT:cpu_user{i}:AVERAGE:%6.1lf %S%%\l'.format(i=counter))
+                cpu_used_format.append('GPRINT:cpu_user{i}:MIN:%6.1lf %% '.format(i=counter))
+                cpu_used_format.append('GPRINT:cpu_user{i}:MAX:%6.1lf %% '.format(i=counter))
+                cpu_used_format.append('GPRINT:cpu_user{i}:AVERAGE:%6.1lf %% \l'.format(i=counter))
 
             elif data[4] == 'gpu0_util.rrd':
                 gpu_used_sources.append('DEF:gpu0_util{i}={p}:sum:AVERAGE'.format(
