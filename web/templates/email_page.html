@@ -29,5 +29,12 @@
         <dt>&nbsp;
       <dl>
     </form>
-    {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %} 
+    {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in get_flashed_messages() %}
+            <div class=flash>Email Sent!</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %} 
 {% endblock %}

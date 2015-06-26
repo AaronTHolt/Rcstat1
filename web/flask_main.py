@@ -109,9 +109,29 @@ def job(jobid, graph_type):
         except KeyError:
             pass
 
-        generate_job_data(jobid, graph_type)
-        session['last_slurm_call'] = time.time()
+        try:
+            gpu_param, missing_set, start, end = process(jobid, graph_type)
+            if start == False:
+                error = "No job data found or job {j} hasn't started. (3)".format(j=jobid)
+                return redirect(url_for('main_page', error=error))
+            elif start == 'Unknown':
+                error = 'No start time listed for job ID {j}. (4)'.format(j=jobid)
+                return redirect(url_for('main_page', error=error))
+            elif end == False or end == 'Unknown':
+                error = "Job {j} hasn't run yet or is still running. (5)".format(j=jobid)
+                return redirect(url_for('main_page', error=error))
+            
+            
+            session['start'] = convert_seconds_to_enddate(start)
+            session['end'] = convert_seconds_to_enddate(end)
+            session['gpu_param'] = gpu_param
+        except IOError:
+            error = 'No matching Job ID found for job ID {j}. (1)'.format(j=jobid)
+            return redirect(url_for('main_page', error=error))
+        except:
+            return redirect(url_for('main_page', error='Unexpected Error'))
 
+        session['last_slurm_call'] = time.time()
         cat_image_number = get_num_images(jobid, graph_type, category)
 
         # Valid input that wasn't a job
@@ -128,40 +148,22 @@ def job(jobid, graph_type):
                             error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
 
-def generate_job_data(jobid, graph_type):
-    try:
-        gpu_param, missing_set, start, end = process(jobid, graph_type)
-        if start == False:
-            error = 'No job data found for job ID {j}. (3)'.format(j=jobid)
-            return redirect(url_for('main_page', error=error))
-        elif end == False:
-            error = "Job {j} hasn't run yet or is still running. (5)".format(j=jobid)
-            return redirect(url_for('main_page', error=error))
-        elif start == 'Unknown':
-            error = 'No start time listed for job ID {j}. (4)'.format(j=jobid)
-            return redirect(url_for('main_page', error=error))
-        
-        session['start'] = convert_seconds_to_enddate(start)
-        session['end'] = convert_seconds_to_enddate(end)
-        session['gpu_param'] = gpu_param
-    except IOError:
-        error = 'No matching Job ID found for job ID {j}. (1)'.format(j=jobid)
-        return redirect(url_for('main_page', error=error))
-    except:
-        return redirect(url_for('main_page', error='Unexpected Error'))
-    return True
 
 ## Emailbutton onclick
 @app.route('/email_it', methods=['POST'])
 @limiter.limit("1 per second")
 def send_an_email():
     error = None
+    success = False
     addr = request.form['text']
     sent = send_email(addr, session['jobid'])
     if sent == False:
         error = 'Unable to send email'
     elif sent == 'NoImages':
         error = 'No images found'
+    elif sent == True:
+        success = True
+        flash('You were successfully logged in')
     return render_template('email_page.html', error=error)
 
 def get_num_images(jobid, graph_type, category):
