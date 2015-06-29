@@ -2,9 +2,15 @@
 
 import os
 import smtplib
+import zipfile
+import tempfile
+import shutil
+from email import encoders
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from email.MIMEBase import MIMEBase
 from email.MIMEImage import MIMEImage
+
 # from flaskr import get_images
 
 def send_email(toaddress, jobid):
@@ -33,27 +39,45 @@ def send_email(toaddress, jobid):
 
     # We reference the image in the IMG SRC attribute by the ID we give it below
     # msgText = MIMEText('<b>Some <i>HTML</i> text</b> and an image.<br><img src="cid:image1"><br>Nifty!', 'html')
-    msgText = MIMEText('Aggregate graphs from job {j}'.format(j=jobid), 'html')
+    msgText = MIMEText('Graphs from job {j}'.format(j=jobid), 'html')
     msgAlternative.attach(msgText)
 
-    image_paths = []
-    for root, dirs, files in os.walk('web/static/job/{j}'.format(j=jobid)):
-        for filename in [os.path.join(root, name) for name in files]:
-            if not 'agg' in filename:
-                continue
-            if not filename.endswith('.png'):
-                continue
-            image_paths.append(filename)
 
-    if len(image_paths) <= 0:
-        server.quit()
-        return 'NoImages'
+    the_file = 'web/static/job/{j}.zip'.format(j=jobid)
 
-    for path in image_paths:
-        fp = open(path, 'rb')
-        img = MIMEImage(fp.read())
-        fp.close()
-        msgRoot.attach(img)
+    try:
+        shutil.make_archive('web/static/job/{j}'.format(j=jobid), 'zip', 
+            'web/static/job/{j}'.format(j=jobid))
+
+        msg = MIMEBase('application', 'zip')
+        msg.set_payload(open(the_file, 'rb').read())
+        encoders.encode_base64(msg)
+        msg.add_header('Content-Disposition', 'attachment', 
+                       filename=the_file + '.zip')
+        msgRoot.attach(msg)
+    except Exception, e:
+        print 'its an error: ', e
+
+    ## Keep incase
+    # image_paths = []
+    # for root, dirs, files in os.walk('web/static/job/{j}'.format(j=jobid)):
+    #     for filename in [os.path.join(root, name) for name in files]:
+    #         if not 'agg' in filename:
+    #             continue
+    #         if not filename.endswith('.png'):
+    #             continue
+    #         image_paths.append(filename)
+
+    # if len(image_paths) <= 0:
+    #     server.quit()
+    #     return 'NoImages'
+
+    # for path in image_paths:
+    #     fp = open(path, 'rb')
+    #     img = MIMEImage(fp.read())
+    #     fp.close()
+    #     msgRoot.attach(img)
+
     try:
         server.sendmail(fromaddr, toaddr, msgRoot.as_string())
         server.quit()
@@ -61,7 +85,8 @@ def send_email(toaddress, jobid):
     except smtplib.SMTPRecipientsRefused:
         server.quit()
         return False
-    except:
+    except Exception, e:
+        print 'Another Error: ', e
         return False
 
     

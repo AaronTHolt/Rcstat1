@@ -115,7 +115,7 @@ def process(jobid, tab):
             missing_set.add(data[1])
             # print "BAD", data[1], data[4]
     # print "Available =", len(available_set), available_set
-    print "Missing =", len(missing_set), missing_set
+    # print "Missing =", len(missing_set), missing_set
     # print "Nodes Used =", len(Set(node_names)-missing_set), Set(node_names)-missing_set    
 
     ## Move this after all the nodes start reporting

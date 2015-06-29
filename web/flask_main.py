@@ -151,10 +151,16 @@ def job(jobid, graph_type):
 
 ## Emailbutton onclick
 @app.route('/email_it', methods=['POST'])
+# @limiter.limit("20 per hour", "1 per second")
 @limiter.limit("1 per second")
 def send_an_email():
     error = None
     success = False
+
+    #make sure all graphs have been generater
+    process(session['jobid'], 'avg')
+    process(session['jobid'], 'agg')
+
     addr = request.form['text']
     sent = send_email(addr, session['jobid'])
     if sent == False:
