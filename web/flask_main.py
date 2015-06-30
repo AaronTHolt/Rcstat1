@@ -95,24 +95,28 @@ def job(jobid, graph_type):
         category = 'node'
 
     cat_image_number = get_num_images(jobid, graph_type, category)
+    total_image_number = get_num_images(jobid, '', '')
 
     if cat_image_number <= 0:
         #rate limit slurm calls
-        try:
-            if time.time() - session['last_slurm_call'] < 2.0:
-                error = "Too many slurm calls, please wait a moment"
-                return redirect(url_for('main_page', error=error))
-        #on the first load there is no 'last_slurm_call'
-        except KeyError:
-            pass
+        if total_image_number <= 0:
+            try:
+                if time.time() - session['last_slurm_call'] < 2.0:
+                    time.sleep(1)
+            #on the first load there is no 'last_slurm_call'
+            except KeyError:
+                pass
 
         try:
             gpu_param, missing_set, start, end = process(jobid, graph_type)
             if start == 'sacct not enabled':
                 error = "sacct not enabled (6)"
                 return redirect(url_for('main_page', error=error))
-            elif start == False:
-                error = "No job data found or job {j} hasn't started. (3)".format(j=jobid)
+            elif start == 'Toolong':
+                error = "jobid too large (it does'nt exist) (7)"
+                return redirect(url_for('main_page', error=error))
+            elif start == 'no data':
+                error = "No job data found for {j}. (3)".format(j=jobid)
                 return redirect(url_for('main_page', error=error))
             elif start == 'Unknown':
                 error = 'No start time listed for job ID {j}. (4)'.format(j=jobid)
@@ -127,8 +131,9 @@ def job(jobid, graph_type):
         except IOError:
             error = 'No matching Job ID found for job ID {j}. (1)'.format(j=jobid)
             return redirect(url_for('main_page', error=error))
-        except:
-            return redirect(url_for('main_page', error='Unexpected Error'))
+        except Exception as e:
+            return redirect(url_for('main_page', 
+                error='Unexpected Error: {err}'.format(err=e)))
 
         session['last_slurm_call'] = time.time()
         cat_image_number = get_num_images(jobid, graph_type, category)

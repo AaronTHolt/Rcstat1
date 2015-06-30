@@ -3,10 +3,18 @@ from web import flask_main
 import unittest
 import tempfile
 import shutil
+import time
 
 class RcstatTestCase(unittest.TestCase):
 
     def setUp(self):
+        ##enable slurm sacct command
+        os.environ['PATH'] = '/curc/slurm/slurm/current/bin:${PATH}'
+        os.environ['LD_LIBRARY_PATH'] = '/curc/slurm/slurm/current/lib:${LD_LIBRARY_PATH}'
+        os.environ['MANPATH'] = 'curc/slurm/slurm/current/share/man${MANPATH}'
+        os.environ['SLURM_ROOT'] = '/curc/slurm/slurm/current'
+        os.environ['I_MPI_PMI_LIBRARY'] = '/curc/slurm/slurm/current/lib/libmpi.so'
+        #start webapp
         flask_main.app.config['Testing'] = True
         self.app = flask_main.app.test_client()
 
@@ -61,16 +69,17 @@ class RcstatTestCase(unittest.TestCase):
         returns an Unknown start time'''
         rv = self.app.post('/graph_summary', data=dict(
             text='100_1'), follow_redirects=True)
-        assert 'No job data found or job' in rv.data
+        assert 'No job data found for' in rv.data
 
     def test_slurm_call_rate_limit(self):
+        start = time.time()
         rv = self.app.post('/graph_summary', data=dict(
             text='101'), follow_redirects=True)
         rv = self.app.post('/graph_summary', data=dict(
             text='102'), follow_redirects=True)
         rv = self.app.post('/graph_summary', data=dict(
             text='103'), follow_redirects=True)
-        assert 'Too many slurm calls, please wait a moment' in rv.data
+        assert time.time() - start >= 2
 
     def test_successful_submission(self):
         rv = self.app.post('/graph_summary', data=dict(
@@ -92,6 +101,20 @@ class RcstatTestCase(unittest.TestCase):
             text='testuser3216@gmail.com'), follow_redirects=True)
         assert 'Email Sent!' in rv.data
 
+    def test_page_not_found(self):
+        rv = self.app.get('/graph_summary/notarounte')
+        assert 'What you were looking for is just not there.' in rv.data
+
+    def test_method_not_allowed(self):
+        rv = self.app.post('/rcstatmain', data=dict(
+            adsfasdf='askdjfhaf'), follow_redirects=True)
+        assert 'Method Not Allowed' in rv.data
+
+    def test_bad_request(self):
+        rv = self.app.post('/graph_summary', data=dict(
+            adsfasdf='askdjfhaf'), follow_redirects=True)
+        assert 'Try again?' in rv.data
+        assert 'Bad Request' in rv.data
 
 if __name__ == '__main__':
     unittest.main()

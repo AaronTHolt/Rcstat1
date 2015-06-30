@@ -27,15 +27,22 @@ def process(jobid, tab):
     # print "Node names = ", node_names
 
     #For jobs with no start time
+    #gpu_param, missing_set, start, end
     if start == 'Unknown':
-        return 'Unknown', 'Unknown', 'Unknown', 'Unknown'
+        return  None, None, 'Unknown', None
 
     elif start == 'sacct not enabled':
-        return 'sacct not enabled', False, False, False
+        return  None, None, 'sacct not enabled', None
 
-    #For job numbers that are too large
-    elif start == False or stop == False:
-        return False, False, False, False
+    elif start == 'no data':
+        return None, None, 'no data', None
+
+    # #For job numbers that are too large
+    # elif start == False:
+    #     return None, None, False, None
+
+    elif stop == False:
+        return None, None, None, False
 
     #make directory for jobid
     try:

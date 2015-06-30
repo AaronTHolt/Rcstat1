@@ -5,4 +5,5 @@ Can also have graphs emailed.
 
 # Instructions #
 python starter.py //start main application
+
 python garbage_collector.py //start garbage collector

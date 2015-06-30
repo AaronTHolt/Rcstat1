@@ -5,22 +5,28 @@ import subprocess
 
 def get_data(jobid, debug):
 
-    cmd = 'sacct -P -j {j} -o Start,End,Nodelist,Partition,JobId > sacct_output/{j}.txt'.format(j=jobid)
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    out, err = p.communicate()
 
-    # Handle: Broken sacct
-    if 'sacct: error: Problem talking to the database: Connection timed out' in err:
-        return 'sacct not enabled', False, False, False
+    try:
+        with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
+            data = f.read()
+        f.close()
+    except:
+        cmd = 'sacct -P -j {j} -o Start,End,Nodelist,Partition,JobId > sacct_output/{j}.txt'.format(j=jobid)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        out, err = p.communicate()
 
-    # Handle: No data from sacct command
-    file_length = sum(1 for line in open('sacct_output/{j}.txt'.format(j=jobid)))
-    if file_length <= 1:
-        return False, False, False, False
+        # Handle: Broken sacct
+        if 'sacct: error: Problem talking to the database: Connection timed out' in err:
+            return 'sacct not enabled', None, None, None
 
-    with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
-        data = f.read()
-    f.close()
+        # Handle: No data from sacct command
+        file_length = sum(1 for line in open('sacct_output/{j}.txt'.format(j=jobid)))
+        if file_length <= 1:
+            return 'no data', None, None, None
+
+        with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
+            data = f.read()
+        f.close()
 
     t1, t2, node_names, cluster_names = parse_job_file(data)
 
@@ -46,7 +52,7 @@ def get_data(jobid, debug):
             stop += 3600*6
             # stop = 'now'
         except ValueError:
-            return False, False, False, False
+            return start, False, None, None
             # stop = 'now'
     # print start, stop
 
