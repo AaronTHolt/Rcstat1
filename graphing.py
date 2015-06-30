@@ -16,8 +16,9 @@ debug = False
 # debug = True
 
 def process(jobid, tab):
-    ## tab is which tab to be loaded
-    ## ex: aggregate, stats, cpu, etc.
+    ## tab is which tab on the website is loading
+    ## agg=aggregate, avg=stats, cpu=cpu_used
+    ## mem_free, bytes_out 
     global debug
 
     # Get job information from slurm
@@ -26,11 +27,14 @@ def process(jobid, tab):
     # print "Node names = ", node_names
 
     #For jobs with no start time
-    if start=='Unknown':
+    if start == 'Unknown':
         return 'Unknown', 'Unknown', 'Unknown', 'Unknown'
 
+    elif start == 'sacct not enabled':
+        return 'sacct not enabled', False, False, False
+
     #For job numbers that are too large
-    if start==False or stop==False:
+    elif start == False or stop == False:
         return False, False, False, False
 
     #make directory for jobid
@@ -46,8 +50,8 @@ def process(jobid, tab):
         pass
     
     #Make directory for each graph type per jobid
-    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_in', 'bytes_out']
-            # 'gpu0_util', 'gpu0_mem_util']
+    types = ['agg', 'avg', 'cpu', 'mem_free', 'bytes_out']
+            # 'bytes_in', 'gpu0_util', 'gpu0_mem_util']
     for graph_type in types:
         try:
             # print 'web/static/job/{j}/{g}'.format(
@@ -57,7 +61,6 @@ def process(jobid, tab):
             os.chmod('web/static/job/{j}/{g}'.format(
                         j=jobid, g=graph_type),0o777)
         except OSError:
-            # print "Fail Sauce"
             pass
 
 
@@ -109,11 +112,8 @@ def process(jobid, tab):
         try:    
             single_node_graphs(start, stop, data, gpu_param)
             available_set.add(data[1])
-            # print "AVAIL", data[1], data[4]
         except rrdtool.error:
-            # print data
             missing_set.add(data[1])
-            # print "BAD", data[1], data[4]
     # print "Available =", len(available_set), available_set
     # print "Missing =", len(missing_set), missing_set
     # print "Nodes Used =", len(Set(node_names)-missing_set), Set(node_names)-missing_set    
@@ -166,7 +166,7 @@ def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   index, gpu_param):
     # graph types are currently: avg, agg
     # avg is averages plotted with stats below
-    # agg is all lines on one plot
+    # agg is Max_Lines lines per plot
 
     ## Add the following to flush rrdcached before graphing
     # --daemon unix:/var/run/rrdcached.sock [...]
@@ -529,99 +529,3 @@ if __name__ == "__main__":
   args = parser.parse_args()
   process(int(float(args.jobid)))
 
-
-
-    # ## GPU statistics
-    # elif graph_type == 'gpu0_mem_used.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='gpu0_mem_used', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Bytes',
-    #           '--title', 'GPU memory used in {c} - {n}'.format(c=cluster, n=nodename),
-    #           '--lower-limit', '-1',
-    #           'DEF:gpu0_mem_used={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:gpu0_mem_used#0000FF')
-
-    # elif graph_type == 'gpu0_graphics_speed.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='gpu0_graphics_speed', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Bytes',
-    #           '--title', 'Graphics Speed in {c} - {n}'.format(c=cluster, n=nodename),
-    #           '--lower-limit', '-1',
-    #           'DEF:gpu0_graphics_speed={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:gpu0_graphics_speed#0000FF')
-
-    # ## Network statistics (not Blanca)
-    # elif graph_type == 'rx_bytes_eth0.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_eth0', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Percent (%)',
-    #           '--title', 'rx bytes eth0 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:rx_bytes_eth0={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:rx_bytes_eth0#0000FF')
-
-    # elif graph_type == 'rx_bytes_eth1.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_eth1', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Percent (%)',
-    #           '--title', 'rx bytes eth1 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:rx_bytes_eth1={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:rx_bytes_eth1#0000FF')
-
-    # elif graph_type == 'tx_bytes_eth0.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_eth0', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Percent (%)',
-    #           '--title', 'tx bytes eth0 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:tx_bytes_eth0={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:tx_bytes_eth0#0000FF')
-
-    # elif graph_type == 'tx_bytes_eth1.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_eth1', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Percent (%)',
-    #           '--title', 'tx bytes eth1 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:tx_bytes_eth1={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:tx_bytes_eth1#0000FF')
-
-    # ## Network statistics (Blanca)
-    # elif graph_type == 'rx_bytes_em1.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_em1', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Bytes',
-    #           '--title', 'rx bytes em1 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:rx_bytes_em1={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:rx_bytes_em1#0000FF')
-
-    # elif graph_type == 'rx_bytes_em2.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='rx_bytes_em2', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Bytes',
-    #           '--title', 'rx bytes em2 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:rx_bytes_em2={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:rx_bytes_em2#0000FF')
-
-    # elif graph_type == 'tx_bytes_em1.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_em1', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Bytes',
-    #           '--title', 'tx bytes em1 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:tx_bytes_em1={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:tx_bytes_em1#0000FF')
-
-    # elif graph_type == 'tx_bytes_em2.rrd':
-    #     rrdtool.graph('plots/{j}/{g}_{n}.png'.format(g='tx_bytes_em2', n=nodename, j=jobid),
-    #           '--start', "{begin}".format(begin=start),
-    #           '--end', "{end}".format(end=stop),
-    #           '--vertical-label', 'Bytes',
-    #           '--title', 'tx bytes em2 in {c} - {n}'.format(c=cluster, n=nodename),
-    #           'DEF:tx_bytes_em2={p}:sum:AVERAGE'.format(p=path),
-    #           'LINE2:tx_bytes_em2#0000FF')

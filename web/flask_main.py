@@ -14,12 +14,8 @@ from graphing import *
 from Utility import convert_seconds_to_enddate
 from email_graphs import send_email
 
-
 # configuration
-# DEBUG = True
 SECRET_KEY = 'super secret development key'
-USERNAME = 'admin'
-PASSWORD = 'default'
 
 # create Flask instance
 app = Flask(__name__)
@@ -37,7 +33,7 @@ def main_page(error=None):
 def redirect_to_main():
     return redirect(url_for('main_page', error=None))
 
-# Login page
+# Start page
 @app.route('/', methods=['GET', 'POST'])
 def login(error=None):
     if request.method == 'POST':
@@ -55,7 +51,6 @@ def redirect_to_summary_graphs():
     return redirect_to_graphs('agg')
 
 ## Graph type selection button on-click
-# @app.route('/graph_select', methods=['POST'])
 @app.route('/job/<id1>', methods=['GET', 'POST'])
 def graph_selection(id1):
     graph_type = request.form['action']
@@ -64,10 +59,12 @@ def graph_selection(id1):
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
 ## After submit button or buttons on all_graph
-# @app.route('/graph_button2', methods=['POST'])
 def redirect_to_graphs(graph_type):
     error = None
     jobid = request.form['text']
+    valid, error = check_valid_jobid(jobid)
+    if valid == False:
+        return redirect(url_for('main_page', error=error))
     session['jobid'] = jobid
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
@@ -111,7 +108,10 @@ def job(jobid, graph_type):
 
         try:
             gpu_param, missing_set, start, end = process(jobid, graph_type)
-            if start == False:
+            if start == 'sacct not enabled':
+                error = "sacct not enabled (6)"
+                return redirect(url_for('main_page', error=error))
+            elif start == False:
                 error = "No job data found or job {j} hasn't started. (3)".format(j=jobid)
                 return redirect(url_for('main_page', error=error))
             elif start == 'Unknown':
@@ -120,7 +120,6 @@ def job(jobid, graph_type):
             elif end == False or end == 'Unknown':
                 error = "Job {j} hasn't run yet or is still running. (5)".format(j=jobid)
                 return redirect(url_for('main_page', error=error))
-            
             
             session['start'] = convert_seconds_to_enddate(start)
             session['end'] = convert_seconds_to_enddate(end)
@@ -139,8 +138,6 @@ def job(jobid, graph_type):
             error = 'No matching Job ID or no data for job ID {j}. (2)'.format(j=jobid)
             return redirect(url_for('main_page', error=error))
 
-
-    
     images = get_images(jobid, graph_type, category)
     session['images'] = images
     error = None
@@ -152,7 +149,7 @@ def job(jobid, graph_type):
 ## Emailbutton onclick
 @app.route('/email_it', methods=['POST'])
 # @limiter.limit("20 per hour", "1 per second")
-@limiter.limit("1 per second")
+@limiter.limit("0.5 per second")
 def send_an_email():
     error = None
     success = False
@@ -169,7 +166,7 @@ def send_an_email():
         error = 'No images found'
     elif sent == True:
         success = True
-        flash('You were successfully logged in')
+        flash('Email Sent!')
     return render_template('email_page.html', error=error)
 
 def get_num_images(jobid, graph_type, category):
@@ -221,7 +218,7 @@ def check_valid_jobid(jobid):
             return False, error
     # Handle: empty, non-numeric, negative, 9digit+
     elif not jobid.isdigit() or len(jobid)>=9:
-        error = '{j} is invalid. Please enter a valid Job ID'.format(
+        error = '{j} is invalid. Please enter a valid Job ID.'.format(
                         j=jobid)
         return False, error
     return True, None
@@ -242,7 +239,6 @@ def too_many_requests(e):
 def server_error(e):
     return render_template('500.html'), 500
 
-
 ## Next 2 sections make it so any time url_for is used
 ## the cache is reset (so the graphs update)
 @app.context_processor
@@ -259,6 +255,3 @@ def dated_url_for(endpoint, **values):
     return url_for(endpoint, **values)
 
 
-# if __name__ == '__main__':
-#     # app.run()
-#     app.run(host='10.225.160.55')

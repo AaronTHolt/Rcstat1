@@ -11,7 +11,7 @@ def get_data(jobid, debug):
 
     # Handle: Broken sacct
     if 'sacct: error: Problem talking to the database: Connection timed out' in err:
-        return False, False, False, False
+        return 'sacct not enabled', False, False, False
 
     # Handle: No data from sacct command
     file_length = sum(1 for line in open('sacct_output/{j}.txt'.format(j=jobid)))

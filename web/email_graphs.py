@@ -11,21 +11,15 @@ from email.MIMEText import MIMEText
 from email.MIMEBase import MIMEBase
 from email.MIMEImage import MIMEImage
 
-# from flaskr import get_images
-
-def send_email(toaddress, jobid):
-    # print "IN SEND EMAIL"
+def send_email(toaddr, jobid):
     server = smtplib.SMTP('10.128.0.190') ##rcmail.rc.colorado.edu
     # server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo('10.225.160.55') ##rcstat1
-    # server.starttls()
-    # server.ehlo('10.225.160.55')
+
 
     # server.login("testuser3216", "imadeapassword!!!")
 
     fromaddr = 'NO REPLY <rcmail.rc.colorado.edu>'
-    # toaddr = "holtat@colorado.edu"
-    toaddr = toaddress
     msgRoot = MIMEMultipart()
     msgRoot['From'] = fromaddr
     msgRoot['To'] = toaddr
@@ -56,9 +50,9 @@ def send_email(toaddress, jobid):
                        filename=the_file + '.zip')
         msgRoot.attach(msg)
     except Exception, e:
-        print 'its an error: ', e
+        print 'Error: ', e
 
-    ## Keep incase
+    ## For attaching individual graphs instead
     # image_paths = []
     # for root, dirs, files in os.walk('web/static/job/{j}'.format(j=jobid)):
     #     for filename in [os.path.join(root, name) for name in files]:
