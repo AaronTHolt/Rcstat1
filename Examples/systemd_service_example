@@ -1,0 +1,9 @@
+[Unit]
+Description=Rcstat App - Statistics and graphs for RC users
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /root/rcstat/rcstat1/starter.py
+
+[Install]
+WantedBy=multi-user.target
