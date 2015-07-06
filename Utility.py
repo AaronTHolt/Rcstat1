@@ -7,12 +7,18 @@ from datetime import datetime
 import hostlist
 import numpy as np
 import colorsys
+import subprocess
 
 def convert_seconds_to_enddate(seconds):
     if seconds == 'now':
         return "Unknown / Still Running"
     return datetime.fromtimestamp(int(seconds)).strftime(
                                                 '%Y-%m-%d %H:%M:%S')
+
+#used to get a sacct usable date (to get users previous jobids)
+def convert_seconds_to_enddate_2(seconds):
+    return datetime.fromtimestamp(int(seconds)).strftime(
+                                                '%Y-%m-%d')
 
 def convert_enddate_to_seconds(ts):
     # Takes ISO 8601 format(string) and converts into epoch time.
@@ -53,7 +59,50 @@ def flat_list(a_list):
     a_flat_list = [item for sublist in a_list for item in sublist]
     return a_flat_list
 
-#parses a slurm sacct ouput file
+#get information about previous
+def list_previous_jobs(username):
+    info = {}
+    # jobid = []
+    # start = []
+    # end = []
+    # state = []
+    # partition = []
+
+    now = time.time()
+    one_month_ago = now - 12678400
+    one_month_ago = convert_seconds_to_enddate_2(one_month_ago)
+
+    cmd = 'sacct -P -u {u} -S {t} --format JobID,Start,End,State,Partition > sacct_output/{u}.txt'.format(u=username, t=one_month_ago)
+    print "COMMAND = ", cmd
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out, err = p.communicate()
+    print out, err
+    with open('sacct_output/{u}.txt'.format(u=username), 'r') as f:
+        data = f.read()
+    f.close()
+
+
+
+    line_number = 0
+    for line in data.split('\n'):
+        print "LINE = ", line
+        if line_number > 0:
+            line_split = line.split('|')
+            if 'batch' in line_split[0]:
+                pass
+            else:
+                info[line_split[0]] = [line_split[1], line_split[2],
+                                        line_split[3], line_split[4]]
+            # jobid.append(line_split[0])
+            # start.append(line_split[1])
+            # end.append(line_split[2])
+            # state.append(line_split[3])
+            # partition.append(line_split[4])
+        line_number += 1
+
+    return info
+
+#parses a slurm sacct ouput file (for job information)
 def parse_job_file(data):
     t1 = ''
     t2 = ''

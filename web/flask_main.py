@@ -11,7 +11,7 @@ from contextlib import closing
 from PIL import Image
 
 from graphing import *
-from Utility import convert_seconds_to_enddate
+from Utility import convert_seconds_to_enddate, list_previous_jobs
 from email_graphs import send_email
 
 # configuration
@@ -26,19 +26,23 @@ app.config.from_object(__name__)
 @app.route('/rcstatmain')
 def main_page(error=None):
     error = request.args.get('error')
-    return render_template('main_page.html', error=error)
+    return render_template('main_page.html', error=error, data=None)
 
 ## Button back to main page
 @app.route('/main', methods=['GET', 'POST'])
 def redirect_to_main():
-    return redirect(url_for('main_page', error=None))
+    try:
+        data = session['joblist']
+    except KeyError:
+        data = None
+    return redirect(url_for('main_page', error=None, data=data))
 
 # Start page
 @app.route('/', methods=['GET', 'POST'])
 def login(error=None):
     if request.method == 'POST':
-        return redirect(url_for('main_page', error=error))
-    return redirect(url_for('main_page', error=error))
+        return redirect(url_for('main_page', error=error, data=None))
+    return redirect(url_for('main_page', error=error, data=None))
 
 ## To email graphs
 @app.route('/email', methods=['GET', 'POST'])
@@ -49,6 +53,18 @@ def redirect_to_email():
 @app.route('/graph_summary', methods=['GET', 'POST'])
 def redirect_to_summary_graphs():
     return redirect_to_graphs('agg')
+
+## Display a table of previous jobids
+@app.route('/table_previous_jobids', methods=['GET', 'POST'])
+def table_of_jobids():
+    username = request.form['username']
+    data = list_previous_jobs(username)
+    for key in data:
+        print key, data[key]
+    print 'HIHIHIHIHIH'
+    print data
+    session['joblist'] = data
+    return redirect(url_for('main_page', error=None, data=session['joblist']))
 
 ## Graph type selection button on-click
 @app.route('/job/<id1>', methods=['GET', 'POST'])

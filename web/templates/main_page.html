@@ -10,7 +10,37 @@
         <dt>&nbsp;
       <dl>
     </form>
+    <!-- <form action="{{ url_for('table_of_jobids') }}" method=post >
+      <dl>
+        <dt>Enter username to retrieve recent Job ID's:
+        <dd><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
+        <dd><input class=btn1 type=submit value=submit>
+        <dt>&nbsp;
+        <dt>&nbsp;
+      <dl>
     </form>
+    <table style="width:100%">
+        <tr>
+            <th>Job ID</th>
+            <th>Start</th> 
+            <th>End</th>
+            <th>State</th>
+            <th>Partition</th>
+        </tr>    
+        {% if data != None %}
+            {% for key, value in data.iteritems() %}
+                <tr>
+                    <td> {{ key }} </th>
+                    <td> {{ value[0] }} </td>
+                    <td> {{ value[1] }} </td>
+                    <td> {{ value[2] }} </td>
+                    <td> {{ value[3] }} </td>
+                </tr>
+            {% endfor %}
+            
+        {% endif %}
+    </table> -->
 {% endblock %}
+
 
 
