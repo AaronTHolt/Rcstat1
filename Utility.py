@@ -75,18 +75,19 @@ def list_previous_jobs(username):
     f.close()
 
     line_number = 0
+    max_lines = 0
     for line in data.split('\n'):
         line_split = line.split('|')
         if line_number > 0 and len(line_split) == 5:
             if 'batch' in line_split[0]:
                 pass
-            else:
+            elif max_lines <= 25:
                 line_split[1] = line_split[1].replace('T', ' ')
                 line_split[2] = line_split[2].replace('T', ' ')
                 info.append([line_split[0], line_split[1], line_split[2],
                                         line_split[3], line_split[4]])
+                max_lines += 1
         line_number += 1
-    info = info[0:25]
     info.sort(key=lambda x: int(x[0]), reverse=True)
     return info
 
