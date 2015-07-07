@@ -61,45 +61,33 @@ def flat_list(a_list):
 
 #get information about previous
 def list_previous_jobs(username):
-    info = {}
-    # jobid = []
-    # start = []
-    # end = []
-    # state = []
-    # partition = []
+    info = []
 
     now = time.time()
     one_month_ago = now - 12678400
     one_month_ago = convert_seconds_to_enddate_2(one_month_ago)
 
     cmd = 'sacct -P -u {u} -S {t} --format JobID,Start,End,State,Partition > sacct_output/{u}.txt'.format(u=username, t=one_month_ago)
-    print "COMMAND = ", cmd
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = p.communicate()
-    print out, err
     with open('sacct_output/{u}.txt'.format(u=username), 'r') as f:
         data = f.read()
     f.close()
 
-
-
     line_number = 0
     for line in data.split('\n'):
-        print "LINE = ", line
-        if line_number > 0:
-            line_split = line.split('|')
+        line_split = line.split('|')
+        if line_number > 0 and len(line_split) == 5:
             if 'batch' in line_split[0]:
                 pass
             else:
-                info[line_split[0]] = [line_split[1], line_split[2],
-                                        line_split[3], line_split[4]]
-            # jobid.append(line_split[0])
-            # start.append(line_split[1])
-            # end.append(line_split[2])
-            # state.append(line_split[3])
-            # partition.append(line_split[4])
+                line_split[1] = line_split[1].replace('T', ' ')
+                line_split[2] = line_split[2].replace('T', ' ')
+                info.append([line_split[0], line_split[1], line_split[2],
+                                        line_split[3], line_split[4]])
         line_number += 1
-
+    info = info[0:25]
+    info.sort(key=lambda x: int(x[0]), reverse=True)
     return info
 
 #parses a slurm sacct ouput file (for job information)

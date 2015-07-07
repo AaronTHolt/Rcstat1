@@ -26,23 +26,25 @@ app.config.from_object(__name__)
 @app.route('/rcstatmain')
 def main_page(error=None):
     error = request.args.get('error')
-    return render_template('main_page.html', error=error, data=None)
+    try:
+        data = session['joblist']
+        if len(data) == 0:
+            data = None
+    except KeyError:
+        data = None
+    return render_template('main_page.html', error=error, data=data)
 
 ## Button back to main page
 @app.route('/main', methods=['GET', 'POST'])
 def redirect_to_main():
-    try:
-        data = session['joblist']
-    except KeyError:
-        data = None
-    return redirect(url_for('main_page', error=None, data=data))
+    return redirect(url_for('main_page', error=None))
 
-# Start page
+## Start page
 @app.route('/', methods=['GET', 'POST'])
 def login(error=None):
     if request.method == 'POST':
-        return redirect(url_for('main_page', error=error, data=None))
-    return redirect(url_for('main_page', error=error, data=None))
+        return redirect(url_for('main_page', error=error))
+    return redirect(url_for('main_page', error=error))
 
 ## To email graphs
 @app.route('/email', methods=['GET', 'POST'])
@@ -59,12 +61,8 @@ def redirect_to_summary_graphs():
 def table_of_jobids():
     username = request.form['username']
     data = list_previous_jobs(username)
-    for key in data:
-        print key, data[key]
-    print 'HIHIHIHIHIH'
-    print data
     session['joblist'] = data
-    return redirect(url_for('main_page', error=None, data=session['joblist']))
+    return redirect(url_for('main_page', error=None))
 
 ## Graph type selection button on-click
 @app.route('/job/<id1>', methods=['GET', 'POST'])
@@ -162,6 +160,9 @@ def job(jobid, graph_type):
     images = get_images(jobid, graph_type, category)
     session['images'] = images
     error = None
+    # return render_template('all_graph.html', images=images, jobid=jobid,
+    #                         error=error, 
+    #                         start=session['start'], end=session['end'])
     return render_template('all_graph.html', images=images, jobid=jobid,
                             error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
