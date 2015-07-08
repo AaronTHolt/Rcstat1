@@ -62,7 +62,10 @@ def table_of_jobids():
     username = request.form['username']
     data = list_previous_jobs(username)
     session['joblist'] = data
-    return redirect(url_for('main_page', error=None))
+    error = None
+    if len(data) == 0:
+        error = 'Username not found'
+    return redirect(url_for('main_page', error=error))
 
 ## Graph type selection button on-click
 @app.route('/job/<id1>', methods=['GET', 'POST'])
@@ -95,6 +98,21 @@ def job(jobid, graph_type):
     '''Checks for valid jobids, generates graphs, directs
     to all_graph page to display if successful'''
 
+    # try:
+    #     gpu_param=session['gpu_param']
+    # except KeyError:
+    #     session['gpu_param']=False
+
+    # try:
+    #     start=session['start']
+    # except KeyError:
+    #     session['start']=False
+
+    # try:
+    #     start=session['end']
+    # except KeyError:
+    #     session['end']=False
+
     # Check for valid jobid inputs
     valid, error = check_valid_jobid(jobid)
     if valid == False:
@@ -122,7 +140,10 @@ def job(jobid, graph_type):
                 pass
 
         try:
-            gpu_param, missing_set, start, end = process(jobid, graph_type)
+            gpu_param, missing_set, start, end, used_slurm = process(jobid, graph_type)
+            if used_slurm == True:
+                session['last_slurm_call'] = time.time()
+
             if start == 'sacct not enabled':
                 error = "sacct not enabled (6)"
                 return redirect(url_for('main_page', error=error))
@@ -148,8 +169,7 @@ def job(jobid, graph_type):
         except Exception as e:
             return redirect(url_for('main_page', 
                 error='Unexpected Error: {err}'.format(err=e)))
-
-        session['last_slurm_call'] = time.time()
+        
         cat_image_number = get_num_images(jobid, graph_type, category)
 
         # Valid input that wasn't a job
@@ -160,12 +180,17 @@ def job(jobid, graph_type):
     images = get_images(jobid, graph_type, category)
     session['images'] = images
     error = None
-    # return render_template('all_graph.html', images=images, jobid=jobid,
-    #                         error=error, 
-    #                         start=session['start'], end=session['end'])
-    return render_template('all_graph.html', images=images, jobid=jobid,
+
+    #For an error that occurs only after restarting the app when a job 
+    #already has images and a sacct outputfile. Only a problem in development.
+    try:
+        return render_template('all_graph.html', images=images, jobid=jobid,
                             error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
+    except KeyError:
+        return render_template('all_graph.html', images=images, jobid=jobid,
+                            error=error, gpu_param=False,
+                            start=None, end=None)
 
 
 ## Emailbutton onclick
@@ -175,13 +200,13 @@ def job(jobid, graph_type):
 def send_an_email():
     error = None
     success = False
-
-    #make sure all graphs have been generater
+    #make sure all graphs have been generated
     process(session['jobid'], 'avg')
     process(session['jobid'], 'agg')
 
     addr = request.form['text']
     sent = send_email(addr, session['jobid'])
+
     if sent == False:
         error = 'Unable to send email'
     elif sent == 'NoImages':

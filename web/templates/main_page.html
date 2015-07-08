@@ -29,7 +29,11 @@ img {
 }
 .form1 {
     float: left;
-    padding-left: 0em;
+    padding-left: 0.9em;
+}
+.form2 {
+    /*float: left;*/
+    padding-left: 7.0em;
 }
 .header3 {
     /*float: right;*/
@@ -37,6 +41,7 @@ img {
 }
 
 .error { 
+    float: left;
     background: #f0d6d6; 
     padding: 0.5em; 
 }
@@ -48,6 +53,7 @@ img {
     font-size: 17px;
     height: 24px;
     width: 20em;
+    padding-left: 0em;
 }
 
 .borderless td, .borderless th {
@@ -57,17 +63,20 @@ img {
 
 p {
     display:inline;
-    margin-left: 5em;
-    font-size : 17px;
+    margin-left: 4em;
+    font-size : 20px;
 }
 
 dl {
     padding-left: 2em;
 }
 
+dd {
+    padding-left: 1em;
+}
 
 table#t01 {
-    width: 90%; 
+    width: 50em; 
     /*background-color: #488cb9;*/
     border-collapse: collapse;
     margin: auto;
@@ -126,23 +135,26 @@ hr {
           <dl>
             <p style="color:#488cb9"><b>Enter Job ID:</b><br></p>
             <dd class=form1><input class=btn1 type=submit value=submit>
-            <dd class=form1><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
-            {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}  
+            <dd class=form2><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
             <dt>&nbsp;</dt>
-            <dt>&nbsp;</dt>
-          </dl>
+          </dl> 
         </form>
     </div>
+    
     <div>
         <form action="{{ url_for('table_of_jobids') }}" method=post  >
           <dl>
             <p style="color:#488cb9"><b>Enter username to retrieve recent Job ID's:</b><br></p>
             <dd class=form1><input class=btn1 type=submit value=submit>
-            <dd class=form1><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
-            <dt>&nbsp;</dt>
-            <dt>&nbsp;</dt>
+            <dd class=form2><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
+
           </dl>
         </form>
+    </div>
+
+    <div style="padding-left:1.1em">
+        {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %} 
+        <p><br></p>
     </div>
        
     {% if data != None %}

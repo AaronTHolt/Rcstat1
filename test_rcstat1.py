@@ -62,7 +62,7 @@ class RcstatTestCase(unittest.TestCase):
         '''Test a valid input that has no associated job'''
         rv = self.app.post('/graph_summary', data=dict(
             text='100'), follow_redirects=True)
-        assert 'No matching Job ID or no data for job ID' in rv.data
+        assert 'No job data found for' in rv.data
 
     def test_valid_input_no_job2_input(self):
         '''Test a valid input that has no associated job where slurm
@@ -79,6 +79,7 @@ class RcstatTestCase(unittest.TestCase):
             text='102'), follow_redirects=True)
         rv = self.app.post('/graph_summary', data=dict(
             text='103'), follow_redirects=True)
+        # print rv.data
         assert time.time() - start >= 2
 
     def test_successful_submission(self):
@@ -94,12 +95,12 @@ class RcstatTestCase(unittest.TestCase):
         num_avg_images = flask_main.get_num_images(843833, 'avg', '')
         assert num_avg_images == 4
 
-    def test_send_an_email(self):
-        rv = self.app.post('/graph_summary', data=dict(
-            text='843855'), follow_redirects=True)
-        rv = self.app.post('/email_it', data=dict(
-            text='testuser3216@gmail.com'), follow_redirects=True)
-        assert 'Email Sent!' in rv.data
+    # def test_send_an_email(self):
+    #     rv = self.app.post('/graph_summary', data=dict(
+    #         text='843855'), follow_redirects=True)
+    #     rv = self.app.post('/email_it', data=dict(
+    #         text='testuser3216@gmail.com'), follow_redirects=True)
+    #     assert 'Email Sent!' in rv.data
 
     def test_page_not_found(self):
         rv = self.app.get('/graph_summary/notarounte')
@@ -115,6 +116,14 @@ class RcstatTestCase(unittest.TestCase):
             adsfasdf='askdjfhaf'), follow_redirects=True)
         assert 'Try again?' in rv.data
         assert 'Bad Request' in rv.data
+
+    def test_invalid_usernames(self):
+        rv = self.app.post('/table_previous_jobids', data=dict(
+            username=''), follow_redirects=True)
+        assert 'Username not found' in rv.data
+        rv = self.app.post('/table_previous_jobids', data=dict(
+            username='asdaffaafff!234'), follow_redirects=True)
+        assert 'Username not found' in rv.data
 
 if __name__ == '__main__':
     unittest.main()

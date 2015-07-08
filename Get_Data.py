@@ -5,6 +5,7 @@ import subprocess
 
 def get_data(jobid, debug):
 
+    used_slurm_call = False
 
     try:
         with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
@@ -14,15 +15,16 @@ def get_data(jobid, debug):
         cmd = 'sacct -P -j {j} -o Start,End,Nodelist,Partition,JobId > sacct_output/{j}.txt'.format(j=jobid)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.communicate()
+        used_slurm_call = True
 
         # Handle: Broken sacct
         if 'sacct: error: Problem talking to the database: Connection timed out' in err:
-            return 'sacct not enabled', None, None, None
+            return 'sacct not enabled', None, None, None, used_slurm_call
 
         # Handle: No data from sacct command
         file_length = sum(1 for line in open('sacct_output/{j}.txt'.format(j=jobid)))
         if file_length <= 1:
-            return 'no data', None, None, None
+            return 'no data', None, None, None, used_slurm_call
 
         with open('sacct_output/{j}.txt'.format(j=jobid), 'r') as f:
             data = f.read()
@@ -52,8 +54,8 @@ def get_data(jobid, debug):
             stop += 3600*6
             # stop = 'now'
         except ValueError:
-            return start, False, None, None
+            return start, False, None, None, used_slurm_call
             # stop = 'now'
     # print start, stop
 
-    return start, stop, cluster_names, node_names
+    return start, stop, cluster_names, node_names, used_slurm_call

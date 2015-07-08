@@ -22,27 +22,27 @@ def process(jobid, tab):
     global debug
 
     # Get job information from slurm
-    start, stop, cluster_names, node_names = get_data(jobid, debug)
+    start, stop, cluster_names, node_names, used_slurm = get_data(jobid, debug)
     # print "Cluster Names = ", cluster_names
     # print "Node names = ", node_names
 
     #For jobs with no start time
     #gpu_param, missing_set, start, end
     if start == 'Unknown':
-        return  None, None, 'Unknown', None
+        return  None, None, 'Unknown', None, used_slurm
 
     elif start == 'sacct not enabled':
-        return  None, None, 'sacct not enabled', None
+        return  None, None, 'sacct not enabled', None, used_slurm
 
     elif start == 'no data':
-        return None, None, 'no data', None
+        return None, None, 'no data', None, used_slurm
 
     # #For job numbers that are too large
     # elif start == False:
     #     return None, None, False, None
 
     elif stop == False:
-        return None, None, None, False
+        return None, None, None, False, used_slurm
 
     #make directory for jobid
     try:
@@ -167,7 +167,7 @@ def process(jobid, tab):
                         graph_dict[index], index, num_colors, 
                         Max_Lines, gpu_param, missing_set)
 
-    return gpu_param, missing_set, start, stop
+    return gpu_param, missing_set, start, stop, used_slurm
 
 def graph_header(start,stop,jobid,cluster,graph_type,rrd_type,
                   index, gpu_param):
