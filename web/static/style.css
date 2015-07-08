@@ -33,9 +33,6 @@ h2              { font-size: 1.2em; }
 .buttonHolder{
     text-align: center;
 }
-.textarea {
-    resize: none;
-}
 .btn1{
   border : solid 1px #e6e6e6;
   border-radius : 5px;

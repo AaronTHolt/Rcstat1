@@ -33,7 +33,7 @@ img {
 }
 .form2 {
     /*float: left;*/
-    padding-left: 7.0em;
+    padding-left: 7.5em;
 }
 .header3 {
     /*float: right;*/
@@ -134,8 +134,9 @@ hr {
         <form action="{{ url_for('redirect_to_summary_graphs') }}" method=post >
           <dl>
             <p style="color:#488cb9"><b>Enter Job ID:</b><br></p>
-            <dd class=form1><input class=btn1 type=submit value=submit>
-            <dd class=form2><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
+            <dd class=form1><input class=btn1 type=submit value=submit></dd>
+            <dd class=form2>
+                <textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
             <dt>&nbsp;</dt>
           </dl> 
         </form>
@@ -145,8 +146,10 @@ hr {
         <form action="{{ url_for('table_of_jobids') }}" method=post  >
           <dl>
             <p style="color:#488cb9"><b>Enter username to retrieve recent Job ID's:</b><br></p>
-            <dd class=form1><input class=btn1 type=submit value=submit>
-            <dd class=form2><textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
+            <dd class=form1><input class=btn1 type=submit value=submit></dd>
+            <dd class=form2>
+                <textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
+            </dd>
 
           </dl>
         </form>

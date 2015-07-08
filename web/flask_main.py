@@ -98,21 +98,6 @@ def job(jobid, graph_type):
     '''Checks for valid jobids, generates graphs, directs
     to all_graph page to display if successful'''
 
-    # try:
-    #     gpu_param=session['gpu_param']
-    # except KeyError:
-    #     session['gpu_param']=False
-
-    # try:
-    #     start=session['start']
-    # except KeyError:
-    #     session['start']=False
-
-    # try:
-    #     start=session['end']
-    # except KeyError:
-    #     session['end']=False
-
     # Check for valid jobid inputs
     valid, error = check_valid_jobid(jobid)
     if valid == False:

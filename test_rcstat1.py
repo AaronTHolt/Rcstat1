@@ -95,12 +95,12 @@ class RcstatTestCase(unittest.TestCase):
         num_avg_images = flask_main.get_num_images(843833, 'avg', '')
         assert num_avg_images == 4
 
-    # def test_send_an_email(self):
-    #     rv = self.app.post('/graph_summary', data=dict(
-    #         text='843855'), follow_redirects=True)
-    #     rv = self.app.post('/email_it', data=dict(
-    #         text='testuser3216@gmail.com'), follow_redirects=True)
-    #     assert 'Email Sent!' in rv.data
+    def test_send_an_email(self):
+        rv = self.app.post('/graph_summary', data=dict(
+            text='843855'), follow_redirects=True)
+        rv = self.app.post('/email_it', data=dict(
+            text='testuser3216@gmail.com'), follow_redirects=True)
+        assert 'Email Sent!' in rv.data
 
     def test_page_not_found(self):
         rv = self.app.get('/graph_summary/notarounte')
