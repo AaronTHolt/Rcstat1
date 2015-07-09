@@ -62,24 +62,23 @@ def flat_list(a_list):
 #get information about previous
 def list_previous_jobs(username):
     info = []
+    sorted_info = []
 
     now = time.time()
-    one_month_ago = now - 12678400
-    one_month_ago = convert_seconds_to_enddate_2(one_month_ago)
+    some_time_ago = now - 2678400*2 #n months ago
+    some_time_ago = convert_seconds_to_enddate_2(some_time_ago)
 
-    cmd = 'sacct -P -u {u} -S {t} --format JobID,Start,End,State,Partition > sacct_output/{u}.txt'.format(u=username, t=one_month_ago)
+    cmd = 'sacct -P -u {u} -S {t} --format JobID,Start,End,State,Partition > sacct_output/{u}.txt'.format(u=username, t=some_time_ago)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = p.communicate()
-    with open('sacct_output/{u}.txt'.format(u=username), 'r') as f:
-        data = f.read()
-    f.close()
 
     line_number = 0
     max_lines = 0
-    for line in data.split('\n'):
+    #read in file backwards to get most recent jobs
+    for line in reversed(open('sacct_output/{u}.txt'.format(u=username)).readlines()):
         line_split = line.split('|')
         if line_number > 0 and len(line_split) == 5:
-            if 'batch' in line_split[0]:
+            if 'batch' in line_split[0] or '.' in line_split[0]:
                 pass
             elif max_lines <= 25:
                 line_split[1] = line_split[1].replace('T', ' ')
@@ -88,8 +87,8 @@ def list_previous_jobs(username):
                                         line_split[3], line_split[4]])
                 max_lines += 1
         line_number += 1
-    info.sort(key=lambda x: int(x[0]), reverse=True)
     return info
+
 
 #parses a slurm sacct ouput file (for job information)
 def parse_job_file(data):

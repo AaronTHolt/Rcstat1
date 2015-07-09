@@ -64,7 +64,7 @@ def table_of_jobids():
     session['joblist'] = data
     error = None
     if len(data) == 0:
-        error = 'Username not found'
+        error = 'No recent jobs (last 2 months) or username not found'
     return redirect(url_for('main_page', error=error))
 
 ## Graph type selection button on-click
