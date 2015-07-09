@@ -239,6 +239,11 @@ def get_images(jobid, graph_type, category):
     return images
 
 def check_valid_jobid(jobid):
+    #Prevent extremely long error messages from being displayed
+    if len(jobid)>=15:
+        error = '{j}... is invalid. Please enter a valid Job ID.'.format(
+                        j=jobid[0:12])
+        return False, error
     #For jobid's with an '_'
     #check both sides are digits, check length
     if '_' in jobid:

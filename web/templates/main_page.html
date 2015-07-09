@@ -20,7 +20,13 @@ body {
     background-color: #444;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
-
+.container1  { 
+    margin: 2em auto; 
+    width: 35em; 
+    /*height: 17em;*/
+    border: 5px solid #ccc;
+    padding: 0.8em; background: white; 
+}
 img {
     display: block;
 }
@@ -44,6 +50,8 @@ img {
     float: left;
     background: #f0d6d6; 
     padding: 0.5em; 
+    width: 20em;
+    word-wrap: break-word;
 }
 
 .textarea {
@@ -68,7 +76,7 @@ p {
 }
 
 dl {
-    padding-left: 2em;
+    padding-left: 0em;
 }
 
 dd {
@@ -130,35 +138,41 @@ hr {
 
     <hr>
 
-    <div>
-        <form action="{{ url_for('redirect_to_summary_graphs') }}" method=post >
-          <dl>
-            <p style="color:#488cb9"><b>Enter Job ID:</b><br></p>
-            <dd class=form1><input class=btn1 type=submit value=submit></dd>
-            <dd class=form2>
-                <textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
-            <dt>&nbsp;</dt>
-          </dl> 
-        </form>
-    </div>
-    
-    <div>
-        <form action="{{ url_for('table_of_jobids') }}" method=post  >
-          <dl>
-            <p style="color:#488cb9"><b>Enter username to retrieve recent Job ID's:</b><br></p>
-            <dd class=form1><input class=btn1 type=submit value=submit></dd>
-            <dd class=form2>
-                <textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
-            </dd>
+    <section class=container1>
+        <div>
+            <form action="{{ url_for('redirect_to_summary_graphs') }}" method=post >
+              <dl>
+                <p style="color:#488cb9"><b>Enter Job ID:</b><br></p>
+                <dd class=form1><input class=btn1 type=submit value=submit></dd>
+                <dd class=form2>
+                    <textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text rows=1 cols=50></textarea>
+                <dt>&nbsp;</dt>
+              </dl> 
+            </form>
+        </div>
+        
+        <div>
+            <form action="{{ url_for('table_of_jobids') }}" method=post  >
+              <dl>
+                <p style="color:#488cb9"><b>Enter username to retrieve recent Job ID's:</b><br></p>
+                <dd class=form1><input class=btn1 type=submit value=submit></dd>
+                <dd class=form2>
+                    <textarea class=textarea onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username rows=1 cols=50></textarea>
+                </dd>
 
-          </dl>
-        </form>
-    </div>
+              </dl>
+            </form>
+        </div>
 
-    <div style="padding-left:1.1em">
-        {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %} 
-        <p><br></p>
-    </div>
+        <div>
+            {% if error %}<p class=error><strong>Error:</strong> {{ error }}
+            <div>
+                <p><br></p>
+            </div>
+            {% endif %} 
+            <!-- <p><br></p> -->
+        </div>
+    </section>
        
     {% if data != None %}
         <table id="t01">
@@ -180,6 +194,7 @@ hr {
             {% endfor %}
         </table>
     {% endif %}
+    <p><br><br></p>
     
 {% endblock %}
 

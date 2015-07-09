@@ -35,6 +35,6 @@ os.environ['SLURM_ROOT'] = '/curc/slurm/slurm/current'
 os.environ['I_MPI_PMI_LIBRARY'] = '/curc/slurm/slurm/current/lib/libmpi.so'
 
 ##run web app
-# flask_main.app.run(host='0.0.0.0')
-flask_main.app.run(debug=True)
+flask_main.app.run(host='0.0.0.0')
+# flask_main.app.run(debug=True)
 
