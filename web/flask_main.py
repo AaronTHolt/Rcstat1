@@ -32,7 +32,8 @@ def main_page(error=None):
             data = None
     except KeyError:
         data = None
-    return render_template('main_page.html', error=error, data=data)
+    return render_template('main_page_b.html', error=error, data=data)
+    # return render_template('main_page.html', error=error, data=data)
 
 ## Button back to main page
 @app.route('/main', methods=['GET', 'POST'])
