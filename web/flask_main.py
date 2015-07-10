@@ -32,7 +32,12 @@ def main_page(error=None):
             data = None
     except KeyError:
         data = None
-    return render_template('main_page_b.html', error=error, data=data)
+    try:
+        jobid = session['jobid']
+    except KeyError:
+        jobid = None
+    return render_template('main_page_b.html', jobid=jobid, 
+                            error=error, data=data)
     # return render_template('main_page.html', error=error, data=data)
 
 ## Button back to main page
@@ -50,7 +55,7 @@ def login(error=None):
 ## To email graphs
 @app.route('/email', methods=['GET', 'POST'])
 def redirect_to_email():
-    return render_template('email_page.html')
+    return render_template('email_page_b.html')
 
 ## Submit jobid button
 @app.route('/graph_summary', methods=['GET', 'POST'])
@@ -89,7 +94,7 @@ def redirect_to_graphs(graph_type):
 #Email page back to graph page
 @app.route('/graphs2', methods=['GET'])
 def redirect_to_graphs2():
-    return render_template('all_graph.html', images=session['images'], 
+    return render_template('all_graph_b.html', images=session['images'], 
                             jobid=session['jobid'], error=None, 
                             gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
@@ -170,11 +175,11 @@ def job(jobid, graph_type):
     #For an error that occurs only after restarting the app when a job 
     #already has images and a sacct outputfile. Only a problem in development.
     try:
-        return render_template('all_graph.html', images=images, jobid=jobid,
+        return render_template('all_graph_b.html', images=images, jobid=jobid,
                             error=error, gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
     except KeyError:
-        return render_template('all_graph.html', images=images, jobid=jobid,
+        return render_template('all_graph_b.html', images=images, jobid=jobid,
                             error=error, gpu_param=False,
                             start=None, end=None)
 
@@ -200,7 +205,7 @@ def send_an_email():
     elif sent == True:
         success = True
         flash('Email Sent!')
-    return render_template('email_page.html', error=error)
+    return render_template('email_page_b.html', error=error)
 
 def get_num_images(jobid, graph_type, category):
     images = []
