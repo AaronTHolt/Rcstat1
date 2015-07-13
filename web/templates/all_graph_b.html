@@ -26,6 +26,16 @@
     input{
         text-align:center;
     }
+    .btn-inverse {
+        padding-top: 1em;
+        padding-bottom: 1em;
+        background: #333;
+        color: #eee;
+    }
+    .btn-inverse:hover {
+        background: #444;
+        color: #eee;
+    }
     .form1 {
         float: left;
         padding-right:1em;
@@ -48,7 +58,7 @@
         margin: auto;
     }
   </style>
- 
+
  
   </head>
   <body>
@@ -64,9 +74,17 @@
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="http://rcstat1.rc.int.colorado.edu:5000/rcstatmain">Main</a></li>
+            <li>
+                <form action="{{ url_for('redirect_to_main') }}" method=get>
+                    <button class="btn btn-inverse">Main</button>
+                </form>
+            </li>
             <li class="active"><a>Graphs</a></li>
-            <li><a href="http://rcstat1.rc.int.colorado.edu:5000/email">Email</a></li>
+            <li>
+                <form action="{{ url_for('redirect_to_email') }}" method=get>
+                    <button class="btn btn-inverse">Email</button>
+                </form>
+            </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>

@@ -22,6 +22,17 @@
         margin-right: auto;
         background: #eee;
     }
+
+    .btn-inverse {
+        padding-top: 1em;
+        padding-bottom: 1em;
+        background: #333;
+        color: #eee;
+    }
+    .btn-inverse:hover {
+        background: #444;
+        color: #eee;
+    }
     .error { 
         float: left;
         background: #f0d6d6; 
@@ -61,20 +72,24 @@
           <text type="text" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="sr-only"></span>
             <span class="icon-bar"></span>
-<!--             <span class="icon-bar"></span>
-            <span class="icon-bar"></span> -->
           </text>
           <a class="navbar-brand">RC-Stat</a>
         </div>
-
-<!-- FIX NAVBAR WHEN JOBID EXISTS BUT IS LOST BECAUSE OF HREF LINK -->
 
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a>Main</a></li>
             {% if jobid != None %}
-                <li><a href="http://rcstat1.rc.int.colorado.edu:5000/graphs2">Graphs</a></li>
-                <li><a href="http://rcstat1.rc.int.colorado.edu:5000/email">Email</a></li>
+                <li>
+                    <form action="{{ url_for('navbar_to_summary_graphs') }}" method=get>
+                        <button class="btn btn-inverse">Graphs</button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{{ url_for('redirect_to_email') }}" method=get>
+                        <button class="btn btn-inverse">Email</button>
+                    </form>
+                </li>
             {% endif %}
             {% if jobid == None %}
                 <li><a title="Enter a jobid to see graphs">Graphs</a></li>

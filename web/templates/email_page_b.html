@@ -26,6 +26,16 @@
         margin-right: auto;
         background: #eee;
     }
+    .btn-inverse {
+        padding-top: 1em;
+        padding-bottom: 1em;
+        background: #333;
+        color: #eee;
+    }
+    .btn-inverse:hover {
+        background: #444;
+        color: #eee;
+    }
     .error { 
         float: left;
         background: #f0d6d6; 
@@ -77,8 +87,16 @@
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="http://rcstat1.rc.int.colorado.edu:5000/rcstatmain">Main</a></li>
-            <li><a href="http://rcstat1.rc.int.colorado.edu:5000/graphs2">Graphs</a></li>
+            <li>
+                <form action="{{ url_for('redirect_to_main') }}" method=get>
+                    <button class="btn btn-inverse">Main</button>
+                </form>
+            </li>
+            <li>
+                <form action="{{ url_for('navbar_to_summary_graphs') }}" method=get>
+                    <button class="btn btn-inverse">Graphs</button>
+                </form>
+            </li>
             <li class="active"><a>Email</a></li>
           </ul>
         </div><!--/.nav-collapse -->

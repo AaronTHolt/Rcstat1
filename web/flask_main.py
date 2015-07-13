@@ -36,7 +36,7 @@ def main_page(error=None):
         jobid = session['jobid']
     except KeyError:
         jobid = None
-    return render_template('main_page_b.html', jobid=jobid, 
+    return render_template('main_page_b.html', jobid=jobid,
                             error=error, data=data)
     # return render_template('main_page.html', error=error, data=data)
 
@@ -57,10 +57,7 @@ def login(error=None):
 def redirect_to_email():
     return render_template('email_page_b.html')
 
-## Submit jobid button
-@app.route('/graph_summary', methods=['GET', 'POST'])
-def redirect_to_summary_graphs():
-    return redirect_to_graphs('agg')
+
 
 ## Display a table of previous jobids
 @app.route('/table_previous_jobids', methods=['GET', 'POST'])
@@ -81,15 +78,42 @@ def graph_selection(id1):
     jobid = id1
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
+## Submit jobid button
+@app.route('/graph_summary', methods=['GET', 'POST'])
+def redirect_to_summary_graphs():
+    return redirect_to_graphs('agg')
+
 ## After submit button or buttons on all_graph
 def redirect_to_graphs(graph_type):
     error = None
     jobid = request.form['text']
     valid, error = check_valid_jobid(jobid)
     if valid == False:
+        session['jobid'] = None
+        jobid = None
         return redirect(url_for('main_page', error=error))
     session['jobid'] = jobid
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
+
+## navbar to graph page
+@app.route('/graph_summary2', methods=['GET', 'POST'])
+def navbar_to_summary_graphs():
+    return navbar_to_graphs('agg')
+
+def navbar_to_graphs(graph_type):
+    error = None
+    try:
+        jobid = session['jobid']
+        valid, error = check_valid_jobid(jobid)
+        if valid == False:
+            session['jobid'] = None
+            jobid = None
+            return redirect(url_for('main_page', error=error))
+        session['jobid'] = jobid
+        return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
+    except KeyError:
+        error = 'No current jobid'
+        return redirect(url_for('main_page', error=error))
 
 #Email page back to graph page
 @app.route('/graphs2', methods=['GET'])

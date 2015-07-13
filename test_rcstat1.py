@@ -120,10 +120,10 @@ class RcstatTestCase(unittest.TestCase):
     def test_invalid_usernames(self):
         rv = self.app.post('/table_previous_jobids', data=dict(
             username=''), follow_redirects=True)
-        assert 'Username not found' in rv.data
+        assert 'username not found' in rv.data
         rv = self.app.post('/table_previous_jobids', data=dict(
             username='asdaffaafff!234'), follow_redirects=True)
-        assert 'Username not found' in rv.data
+        assert 'username not found' in rv.data
 
 if __name__ == '__main__':
     unittest.main()
