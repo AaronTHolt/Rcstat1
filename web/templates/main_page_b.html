@@ -105,7 +105,7 @@
     <div class="container">
         <div style="width:40em;" class="panel panel-default">
             <p><br></p>
-            <h4 style="text-align: center;">Enter Job ID:</h4>
+            <h4 style="text-align:left;margin-left:5em;">Enter Job ID:</h4>
             <form style="margin-left:4em;width:24em" action="{{ url_for('redirect_to_summary_graphs') }}" method=post  >
                 <div class="input-group">
                     <input id="text" type="text" placeholder="Enter Job ID" class="form-control" onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=text>
@@ -116,7 +116,7 @@
             </form>
 
             <p><br></p>
-            <h4 style="text-align: center;">Enter username to retrieve recent job ID's:</h4>
+            <h4 style="text-align:left;margin-left:5em;">Enter username to retrieve recent job ID's:</h4>
             <form style="margin-left:4em;width:24em" action="{{ url_for('table_of_jobids') }}" method=post  >
                 <div class="input-group">
                     <input id="text" type="text" placeholder="Enter Username" class="form-control" onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }" name=username>

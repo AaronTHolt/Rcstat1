@@ -87,9 +87,8 @@ def redirect_to_summary_graphs():
 def redirect_to_graphs(graph_type):
     error = None
     jobid = request.form['text']
-    valid, error = check_valid_jobid(jobid)
+    jobid, valid, error = check_valid_jobid(jobid)
     if valid == False:
-        session['jobid'] = None
         jobid = None
         return redirect(url_for('main_page', error=error))
     session['jobid'] = jobid
@@ -104,9 +103,8 @@ def navbar_to_graphs(graph_type):
     error = None
     try:
         jobid = session['jobid']
-        valid, error = check_valid_jobid(jobid)
+        jobid, valid, error = check_valid_jobid(jobid)
         if valid == False:
-            session['jobid'] = None
             jobid = None
             return redirect(url_for('main_page', error=error))
         session['jobid'] = jobid
@@ -129,7 +127,7 @@ def job(jobid, graph_type):
     to all_graph page to display if successful'''
 
     # Check for valid jobid inputs
-    valid, error = check_valid_jobid(jobid)
+    jobid, valid, error = check_valid_jobid(jobid)
     if valid == False:
         return redirect(url_for('main_page', error=error))
 
@@ -269,11 +267,15 @@ def get_images(jobid, graph_type, category):
     return images
 
 def check_valid_jobid(jobid):
+    '''Remove whitespace, check for bad user inputs'''
+    #remove whitespace
+    jobid = "".join(jobid.split())
+
     #Prevent extremely long error messages from being displayed
     if len(jobid)>=15:
         error = '{j}... is invalid. Please enter a valid Job ID.'.format(
                         j=jobid[0:12])
-        return False, error
+        return jobid, False, error
     #For jobid's with an '_'
     #check both sides are digits, check length
     if '_' in jobid:
@@ -282,13 +284,13 @@ def check_valid_jobid(jobid):
             (not split_id[1].isdigit()) or (len(jobid)>=12)):
             error = '{j} is invalid. Please enter a valid Job ID.'.format(
                         j=jobid)
-            return False, error
+            return jobid, False, error
     # Handle: empty, non-numeric, negative, 9digit+
     elif not jobid.isdigit() or len(jobid)>=9:
         error = '{j} is invalid. Please enter a valid Job ID.'.format(
                         j=jobid)
-        return False, error
-    return True, None
+        return jobid, False, error
+    return jobid, True, None
 
 @app.errorhandler(400)
 def bad_request(e):
@@ -297,6 +299,10 @@ def bad_request(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return render_template('405.html'), 405
 
 @app.errorhandler(429)
 def too_many_requests(e):
