@@ -23,7 +23,7 @@ limiter = Limiter(app)
 app.config.from_object(__name__)
 
 ## Display main page
-@app.route('/rcstatmain')
+@app.route('/rcstat')
 def main_page(error=None):
     error = request.args.get('error')
     try:
@@ -41,26 +41,26 @@ def main_page(error=None):
     # return render_template('main_page.html', error=error, data=data)
 
 ## Button back to main page
-@app.route('/main', methods=['GET', 'POST'])
+@app.route('/rcstat/main', methods=['GET', 'POST'])
 def redirect_to_main():
     return redirect(url_for('main_page', error=None))
 
-## Start page
-@app.route('/', methods=['GET', 'POST'])
+## Included so /rcstat/ doesn't error
+@app.route('/rcstat/', methods=['GET', 'POST'])
 def login(error=None):
     if request.method == 'POST':
         return redirect(url_for('main_page', error=error))
     return redirect(url_for('main_page', error=error))
 
 ## To email graphs
-@app.route('/email', methods=['GET', 'POST'])
+@app.route('/rcstat/email', methods=['GET', 'POST'])
 def redirect_to_email():
     return render_template('email_page_b.html')
 
 
 
 ## Display a table of previous jobids
-@app.route('/table_previous_jobids', methods=['GET', 'POST'])
+@app.route('/rcstat/table_previous_jobids', methods=['GET', 'POST'])
 def table_of_jobids():
     username = request.form['username']
     data = list_previous_jobs(username)
@@ -71,7 +71,7 @@ def table_of_jobids():
     return redirect(url_for('main_page', error=error))
 
 ## Graph type selection button on-click
-@app.route('/job/<id1>', methods=['GET', 'POST'])
+@app.route('/rcstat/job/<id1>', methods=['GET', 'POST'])
 def graph_selection(id1):
     graph_type = request.form['action']
     # jobid = session['jobid']
@@ -79,7 +79,7 @@ def graph_selection(id1):
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
 ## Submit jobid button
-@app.route('/graph_summary', methods=['GET', 'POST'])
+@app.route('/rcstat/graph_summary', methods=['GET', 'POST'])
 def redirect_to_summary_graphs():
     return redirect_to_graphs('agg')
 
@@ -95,7 +95,7 @@ def redirect_to_graphs(graph_type):
     return redirect(url_for('job', jobid=jobid, graph_type=graph_type))
 
 ## navbar to graph page
-@app.route('/graph_summary2', methods=['GET', 'POST'])
+@app.route('/rcstat/graph_summary2', methods=['GET', 'POST'])
 def navbar_to_summary_graphs():
     return navbar_to_graphs('agg')
 
@@ -114,14 +114,14 @@ def navbar_to_graphs(graph_type):
         return redirect(url_for('main_page', error=error))
 
 #Email page back to graph page
-@app.route('/graphs2', methods=['GET'])
+@app.route('/rcstat/graphs2', methods=['GET'])
 def redirect_to_graphs2():
     return render_template('all_graph_b.html', images=session['images'], 
                             jobid=session['jobid'], error=None, 
                             gpu_param=session['gpu_param'],
                             start=session['start'], end=session['end'])
 
-@app.route('/static/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
+@app.route('/rcstat/static/job/<jobid>/<graph_type>', methods=['GET', 'POST'])
 def job(jobid, graph_type):
     '''Checks for valid jobids, generates graphs, directs
     to all_graph page to display if successful'''
@@ -207,7 +207,7 @@ def job(jobid, graph_type):
 
 
 ## Emailbutton onclick
-@app.route('/email_it', methods=['POST'])
+@app.route('/rcstat/email_it', methods=['POST'])
 # @limiter.limit("20 per hour", "1 per second")
 @limiter.limit("0.5 per second")
 def send_an_email():

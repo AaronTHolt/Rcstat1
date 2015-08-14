@@ -16,6 +16,9 @@ debug = False
 # debug = True
 
 def process(jobid, tab):
+
+    # print "DIR = ", os.getcwd()
+
     ## tab is which tab on the website is loading
     ## agg=aggregate, avg=stats, cpu=cpu_used
     ## mem_free, bytes_out 
